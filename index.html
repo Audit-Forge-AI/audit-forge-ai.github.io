@@ -742,55 +742,56 @@ function extractLinks(html, base){
 // ═══════════════════════════════════════
 // PAGE ANALYZER
 // ═══════════════════════════════════════
+
 function analyzePage(html, url){
   const parser = new DOMParser();
   const doc = parser.parseFromString(html,'text/html');
 
   const title = doc.querySelector('title')?.textContent?.trim() || '';
   const desc = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
-  const h1s = [...doc.querySelectorAll('h1')].map(h=>h.textContent.trim());
-  const h2s = [...doc.querySelectorAll('h2')].map(h=>h.textContent.trim());
-  const h3s = [...doc.querySelectorAll('h3')].map(h=>h.textContent.trim());
-  const h4s = [...doc.querySelectorAll('h4')].map(h=>h.textContent.trim());
-  const imgs = [...doc.querySelectorAll('img')];
-  const missingAlt = imgs.filter(img=>!img.getAttribute('alt')).length;
+  const h1s=[...doc.querySelectorAll('h1')].map(h=>h.textContent.trim());
+  const h2s=[...doc.querySelectorAll('h2')].map(h=>h.textContent.trim());
+  const h3s=[...doc.querySelectorAll('h3')].map(h=>h.textContent.trim());
+  const h4s=[...doc.querySelectorAll('h4')].map(h=>h.textContent.trim());
+  const imgs=[...doc.querySelectorAll('img')];
+  const missingAlt=imgs.filter(img=>!img.getAttribute('alt')).length;
 
-  // Build heading structure
-  const headingNodes = [];
-  doc.querySelectorAll('h1,h2,h3,h4').forEach(h=>{
-    headingNodes.push({tag:h.tagName.toLowerCase(), text:h.textContent.trim()});
-  });
+  const canonical=doc.querySelector('link[rel="canonical"]')?.href||'';
+  const robotsMeta=doc.querySelector('meta[name="robots"]')?.content||'';
+  const ogTitle=doc.querySelector('meta[property="og:title"]')?.content||'';
+  const ogDesc=doc.querySelector('meta[property="og:description"]')?.content||'';
+  const twitterCard=doc.querySelector('meta[name="twitter:card"]')?.content||'';
+  const schemas=[...doc.querySelectorAll('script[type="application/ld+json"]')];
 
-  // Score
-  let score = 100;
+  const headingNodes=[];
+  doc.querySelectorAll('h1,h2,h3,h4').forEach(h=>headingNodes.push({tag:h.tagName.toLowerCase(),text:h.textContent.trim()}));
+
+  let score=100;
   if(!title) score-=15;
   if(!desc) score-=10;
   if(h1s.length===0) score-=15;
   if(h1s.length>1) score-=10;
   if(missingAlt>0) score-=Math.min(15,missingAlt*3);
-  if(title && title.length > 60) score-=5;
-  if(desc && desc.length > 160) score-=5;
-  score = Math.max(0,score);
+  if(!canonical) score-=8;
+  if(!robotsMeta) score-=5;
+  if(!ogTitle || !ogDesc) score-=8;
+  if(!twitterCard) score-=5;
+  if(!schemas.length) score-=10;
+  score=Math.max(0,score);
 
-  // AI readiness
-  const hasSemanticMarkup = doc.querySelectorAll('article,section,main,nav,aside').length;
-  const hasTables = doc.querySelectorAll('table').length;
-  const hasLists = doc.querySelectorAll('ul,ol').length;
-  const hasSchema = doc.querySelectorAll('script[type="application/ld+json"]').length;
-  const hasHeadings = headingNodes.length;
+  const semantic=doc.querySelectorAll('article,section,main,nav,aside').length;
+  const lists=doc.querySelectorAll('ul,ol').length;
+  const tables=doc.querySelectorAll('table').length;
 
-  const aiScore = Math.min(100, Math.round(
-    (hasSemanticMarkup ? 20 : 0) +
-    (hasTables ? 15 : 0) +
-    (hasLists ? 15 : 0) +
-    (hasSchema ? 25 : 0) +
-    (hasHeadings ? 15 : 0) +
-    (desc ? 10 : 0)
+  const aiScore=Math.min(100,Math.round(
+    (semantic?20:0)+(lists?10:0)+(tables?10:0)+
+    (schemas.length?25:0)+(canonical?10:0)+(desc?10:0)+
+    (ogTitle?5:0)+(twitterCard?5:0)+(headingNodes.length?15:0)
   ));
 
-  return {title,desc,h1s,h2s,h3s,h4s,headingNodes,missingAlt,score,aiScore,hasSemanticMarkup,hasTables,hasLists,hasSchema,hasHeadings,url,html};
+  return {title,desc,h1s,h2s,h3s,h4s,headingNodes,missingAlt,score,aiScore,
+  canonical,robotsMeta,ogTitle,ogDesc,twitterCard,schemaCount:schemas.length,url,html};
 }
-
 
 // ═══════════════════════════════════════
 // CRAWL ENGINE
@@ -1264,6 +1265,22 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <thead><tr><th>URL</th><th>Status</th><th>Score</th><th>Title</th><th>Missing Alt</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>
+
+<section style="margin:24px;padding:20px;border:1px solid #444;border-radius:12px">
+<h2>AuditForge V5 Roadmap</h2>
+<p>This build has enhanced SEO and AI analysis. The following enterprise-grade modules are planned:</p>
+<ul>
+<li>robots.txt crawler & validation</li>
+<li>sitemap.xml discovery & parsing</li>
+<li>llms.txt discovery & validation</li>
+<li>Security headers audit</li>
+<li>Core Web Vitals / PageSpeed integration</li>
+<li>Advanced schema validation</li>
+<li>Accessibility audit</li>
+<li>Expanded reporting dashboard</li>
+</ul>
+</section>
+
 </body></html>`;
 
   const blob = new Blob([html],{type:'text/html'});
@@ -1276,5 +1293,21 @@ tr:hover td{background:rgba(255,255,255,.02)}
 // Init schema on load
 buildSchemaFields();
 </script>
+
+<section style="margin:24px;padding:20px;border:1px solid #444;border-radius:12px">
+<h2>AuditForge V5 Roadmap</h2>
+<p>This build has enhanced SEO and AI analysis. The following enterprise-grade modules are planned:</p>
+<ul>
+<li>robots.txt crawler & validation</li>
+<li>sitemap.xml discovery & parsing</li>
+<li>llms.txt discovery & validation</li>
+<li>Security headers audit</li>
+<li>Core Web Vitals / PageSpeed integration</li>
+<li>Advanced schema validation</li>
+<li>Accessibility audit</li>
+<li>Expanded reporting dashboard</li>
+</ul>
+</section>
+
 </body>
 </html>
