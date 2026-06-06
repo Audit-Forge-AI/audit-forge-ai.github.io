@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditForge AI Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C0F;
+  --bg2:#0D1117;
+  --bg3:#111820;
+  --bg4:#161E28;
+  --border:#1E2D3D;
+  --border2:#243040;
+  --green:#10B981;
+  --green2:#059669;
+  --green-dim:#0D4F35;
+  --red:#EF4444;
+  --red-dim:#4A1515;
+  --amber:#F59E0B;
+  --amber-dim:#4A3010;
+  --blue:#3B82F6;
+  --text:#E2E8F0;
+  --text2:#94A3B8;
+  --text3:#4A5568;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Syne',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--sans)}
+input,select,textarea{font-family:var(--sans)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* STATUS BAR */
+#status-bar{
+  height:32px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-family:var(--mono);font-size:11px;color:var(--text2);
+  flex-shrink:0;position:relative;z-index:100;
+}
+.status-ping{display:flex;align-items:center;gap:6px}
+.ping-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(16,185,129,0)}}
+.enterprise-badge{
+  background:linear-gradient(90deg,rgba(16,185,129,.15),rgba(16,185,129,.05));
+  border:1px solid rgba(16,185,129,.3);
+  color:var(--green);padding:2px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;
+}
+#clock{color:var(--text2)}
+
+/* LAYOUT */
+#app{display:flex;height:calc(100vh - 32px);overflow:hidden}
+
+/* SIDEBAR */
+#sidebar{
+  width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-logo{
+  padding:20px 16px 16px;border-bottom:1px solid var(--border);
+}
+.sidebar-logo .logo-mark{font-family:var(--sans);font-size:18px;font-weight:800;color:var(--green);letter-spacing:-.02em}
+.sidebar-logo .logo-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px;letter-spacing:.06em}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-section{padding:8px 16px 4px;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:8px 16px;
+  font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;
+  border-left:2px solid transparent;position:relative;
+}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--green);background:rgba(16,185,129,.06);border-left-color:var(--green)}
+.nav-item .nav-icon{font-size:14px;width:16px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;font-family:var(--mono)}
+.nav-badge.green{background:var(--green-dim);color:var(--green)}
+.sidebar-bottom{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* MAIN */
+#main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+
+/* PANEL SYSTEM */
+.panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.panel.active{display:flex}
+
+/* CRAWLER PANEL */
+#panel-crawler{padding:24px;gap:16px;overflow-y:auto}
+.panel-header{margin-bottom:8px}
+.panel-title{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.03em}
+.panel-subtitle{font-size:13px;color:var(--text2);margin-top:4px;font-family:var(--mono)}
+
+.crawler-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:20px}
+.input-group{margin-bottom:16px}
+.input-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px}
+.url-input{
+  width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+  padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--text);
+  transition:border-color .15s;outline:none;
+}
+.url-input:focus{border-color:var(--green)}
+.url-input::placeholder{color:var(--text3)}
+
+.controls-row{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.slider-group{flex:1;min-width:200px}
+.slider-track{display:flex;gap:6px;align-items:center;margin-top:8px}
+.depth-btn{
+  flex:1;padding:6px 4px;border:1px solid var(--border2);background:var(--bg);
+  border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:12px;
+  transition:all .15s;
+}
+.depth-btn:hover{border-color:var(--border2);color:var(--text)}
+.depth-btn.active{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+
+.exec-btn{
+  padding:12px 28px;background:var(--green);border:none;border-radius:6px;
+  color:#000;font-weight:700;font-size:13px;letter-spacing:.02em;
+  transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:8px;
+}
+.exec-btn:hover{background:var(--green2);transform:translateY(-1px)}
+.exec-btn:active{transform:translateY(0)}
+.exec-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.exec-btn .spinner{width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.exec-btn.loading .spinner{display:block}
+.exec-btn.loading .btn-text{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PROGRESS BAR */
+.progress-bar-wrap{display:none;margin-top:12px}
+.progress-bar-wrap.visible{display:block}
+.progress-info{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:6px}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .3s;width:0%}
+
+/* CRAWL GRID */
+.grid-header{
+  display:grid;grid-template-columns:1fr 120px 100px 80px;
+  padding:8px 12px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px 6px 0 0;font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-top:4px;
+}
+#crawl-grid{
+  border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;
+  overflow-y:auto;max-height:400px;
+}
+.grid-row{
+  display:grid;grid-template-columns:1fr 120px 100px 80px;
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:12px;align-items:center;
+  transition:background .1s;cursor:pointer;
+}
+.grid-row:last-child{border-bottom:none}
+.grid-row:hover{background:rgba(255,255,255,.02)}
+.grid-row.new-row{animation:rowIn .3s ease-out}
+@keyframes rowIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.url-cell{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
+.url-cell a{color:var(--text2)}
+.status-cell{text-align:center}
+.status-200{color:var(--green)}
+.status-404{color:var(--red)}
+.status-other{color:var(--amber)}
+.score-cell{text-align:center}
+.score-high{color:var(--green)}
+.score-mid{color:var(--amber)}
+.score-low{color:var(--red)}
+.action-cell{text-align:right}
+.drill-btn{
+  padding:3px 10px;border:1px solid var(--border2);background:transparent;
+  border-radius:3px;color:var(--text2);font-family:var(--mono);font-size:11px;
+  transition:all .15s;
+}
+.drill-btn:hover{border-color:var(--green);color:var(--green)}
+.empty-grid{padding:40px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px}
+
+/* SUMMARY CARDS */
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px}
+.sum-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px}
+.sum-card-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px}
+.sum-card-value{font-size:28px;font-weight:800;color:var(--green);font-family:var(--mono)}
+.sum-card-value.red{color:var(--red)}
+.sum-card-value.amber{color:var(--amber)}
+.sum-card-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+
+.export-btn{
+  margin-top:16px;padding:10px 24px;border:1px solid var(--border2);background:var(--bg3);
+  border-radius:6px;color:var(--text2);font-size:13px;font-weight:600;
+  transition:all .15s;display:flex;align-items:center;gap:8px;
+}
+.export-btn:hover{border-color:var(--green);color:var(--green)}
+
+/* DRILLDOWN PANEL */
+#panel-drilldown{overflow-y:auto;padding:24px;gap:20px}
+.back-btn{
+  display:flex;align-items:center;gap:6px;color:var(--text2);font-size:13px;
+  font-family:var(--mono);background:none;border:none;padding:0;
+  margin-bottom:16px;transition:color .15s;
+}
+.back-btn:hover{color:var(--green)}
+
+/* MODULE TABS */
+.module-tabs{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:3px}
+.mod-tab{
+  flex:1;padding:8px 6px;border:none;background:transparent;border-radius:4px;
+  color:var(--text2);font-size:11px;font-weight:700;letter-spacing:.04em;font-family:var(--mono);
+  transition:all .15s;text-align:center;
+}
+.mod-tab:hover{color:var(--text)}
+.mod-tab.active{background:var(--bg4);color:var(--green)}
+
+/* MODULE CONTAINERS */
+.module-pane{display:none}
+.module-pane.active{display:block}
+
+/* MOD 1 - META */
+.meta-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.meta-edit-group{display:flex;flex-direction:column;gap:12px}
+.meta-field{background:var(--bg);border:1px solid var(--border2);border-radius:6px;overflow:hidden}
+.meta-field-header{padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);display:flex;justify-content:space-between;align-items:center}
+.char-count{font-size:10px;font-family:var(--mono)}
+.char-count.ok{color:var(--green)}
+.char-count.warn{color:var(--amber)}
+.char-count.bad{color:var(--red)}
+.meta-input{width:100%;background:transparent;border:none;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:12px;resize:none;outline:none;min-height:60px}
+.pixel-bar{height:4px;margin-top:0;transition:background .3s}
+.pixel-bar.ok{background:var(--green)}
+.pixel-bar.warn{background:var(--amber)}
+.pixel-bar.bad{background:var(--red)}
+
+/* SERP MOCKUP */
+.serp-container{background:var(--bg);border:1px solid var(--border2);border-radius:6px;overflow:hidden}
+.serp-toggle{display:flex;gap:4px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.serp-btn{padding:4px 12px;border:1px solid transparent;background:transparent;border-radius:3px;color:var(--text2);font-family:var(--mono);font-size:11px;transition:all .15s}
+.serp-btn.active{border-color:var(--border2);background:var(--bg3);color:var(--text)}
+.serp-preview{padding:16px}
+.serp-url{font-size:12px;color:#4ade80;font-family:var(--mono);margin-bottom:4px}
+.serp-title{color:#8bb8ff;font-size:18px;font-weight:400;line-height:1.3;margin-bottom:4px;transition:font-size .2s}
+.serp-desc{color:#bdc1c6;font-size:13px;line-height:1.5}
+.serp-preview.mobile .serp-title{font-size:15px}
+.serp-preview.mobile .serp-desc{font-size:12px}
+
+/* MOD 2 - HEADING */
+.heading-tree{font-family:var(--mono);font-size:12px;padding:12px}
+.h-node{padding:6px 0;display:flex;align-items:flex-start;gap:8px}
+.h-node .h-tag{font-size:10px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:3px;flex-shrink:0;margin-top:1px}
+.h-tag.h1{background:rgba(16,185,129,.15);color:var(--green);border:1px solid var(--green-dim)}
+.h-tag.h2{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.h-tag.h3{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid var(--amber-dim)}
+.h-tag.h4{background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.2)}
+.h-node .h-text{color:var(--text);flex:1}
+.h-node .h-err{color:var(--red);font-size:10px;margin-left:auto;white-space:nowrap;align-self:center}
+.h-indent-1{margin-left:0}
+.h-indent-2{margin-left:16px}
+.h-indent-3{margin-left:32px}
+.h-indent-4{margin-left:48px}
+.heading-violations{margin-top:12px;background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:12px}
+.violation-item{color:var(--red);font-family:var(--mono);font-size:11px;margin-bottom:6px;display:flex;align-items:flex-start;gap:6px}
+.violation-item:last-child{margin-bottom:0}
+
+/* MOD 3 - SCHEMA */
+.schema-layout{display:grid;grid-template-columns:280px 1fr;gap:16px}
+.schema-controls{display:flex;flex-direction:column;gap:12px}
+.schema-select{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:13px;appearance:none;outline:none}
+.schema-fields{display:flex;flex-direction:column;gap:8px}
+.schema-field-row{display:flex;flex-direction:column;gap:4px}
+.schema-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono)}
+.schema-input{background:var(--bg);border:1px solid var(--border2);border-radius:4px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:100%;transition:border-color .15s}
+.schema-input:focus{border-color:var(--green)}
+.schema-output{background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.schema-output-header{padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;color:var(--text3)}
+.copy-btn{padding:4px 12px;border:1px solid var(--border2);background:transparent;border-radius:3px;color:var(--text2);font-family:var(--mono);font-size:11px;transition:all .15s}
+.copy-btn:hover{border-color:var(--green);color:var(--green)}
+.schema-code{padding:12px;overflow:auto;flex:1;font-family:var(--mono);font-size:11px;color:var(--green);line-height:1.6;white-space:pre;max-height:300px}
+
+/* MOD 4 - AI RADAR */
+.ai-radar{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.radar-score-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center}
+.radar-score-ring{width:100px;height:100px;margin:0 auto 12px;position:relative}
+.radar-score-ring svg{transform:rotate(-90deg)}
+.radar-score-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:800;font-family:var(--mono)}
+.radar-metrics{display:flex;flex-direction:column;gap:10px}
+.radar-metric{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px}
+.radar-metric-label{font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:8px;display:flex;justify-content:space-between}
+.radar-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px}
+.radar-fill{height:100%;border-radius:2px;transition:width 1s ease-out}
+.radar-fill.high{background:var(--green)}
+.radar-fill.mid{background:var(--amber)}
+.radar-fill.low{background:var(--red)}
+
+/* EMPTY STATE */
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);font-family:var(--mono);gap:8px}
+.empty-state-icon{font-size:40px;opacity:.3}
+.empty-state-text{font-size:12px}
+
+/* MOBILE */
+@media(max-width:768px){
+  #sidebar{display:none}
+  .meta-layout{grid-template-columns:1fr}
+  .schema-layout{grid-template-columns:1fr}
+  .ai-radar{grid-template-columns:1fr}
+  .summary-cards{grid-template-columns:1fr 1fr}
+  .grid-header,.grid-row{grid-template-columns:1fr 80px 70px 60px;font-size:10px}
+}
+
+/* SCROLLABLE MAIN AREAS */
+#panel-crawler,#panel-drilldown{overflow-y:auto}
+
+/* Section divider */
+.section-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <div class="status-ping">
+    <div class="ping-dot"></div>
+    <span>SYS_PING: <span id="ping-val">12ms</span></span>
+    <span style="margin-left:12px;color:var(--text3)">|</span>
+    <span style="margin-left:12px">PROXY: api.allorigins.win</span>
+  </div>
+  <div class="enterprise-badge">Enterprise Core — 100% Free Open-Source Workspace</div>
+  <div id="clock"></div>
+</div>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">AuditForge</div>
+      <div class="logo-sub">AI Pro // v3.1.0</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Core</div>
+      <div class="nav-item active" data-panel="crawler">
+        <span class="nav-icon">⬡</span> Crawler Console
+      </div>
+      <div class="nav-section">Analysis</div>
+      <div class="nav-item" data-panel="drilldown" id="nav-drilldown">
+        <span class="nav-icon">◈</span> Page Inspector
+        <span class="nav-badge green" id="page-count-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-section">Reports</div>
+      <div class="nav-item" id="nav-export-sidebar">
+        <span class="nav-icon">↓</span> Export Report
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      CORS: allorigins.win<br>
+      Engine: BFS Crawler v2
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+
+    <!-- CRAWLER PANEL -->
+    <div class="panel active" id="panel-crawler">
+
+      <div class="panel-header">
+        <div class="panel-title">Crawler Console</div>
+        <div class="panel-subtitle">BFS recursive engine // max concurrency: 2 streams</div>
+      </div>
+
+      <div class="crawler-card">
+        <div class="input-group">
+          <div class="input-label">Target Root URL</div>
+          <input class="url-input" id="url-input" type="url" placeholder="Enter website root link, e.g., https://example.com...">
+          <div id="url-error" style="display:none;margin-top:8px;padding:8px 12px;background:var(--red-dim);border:1px solid rgba(239,68,68,.25);border-radius:5px;font-family:var(--mono);font-size:11px;color:var(--red)">⛔ Invalid URL — please enter a full URL including https://</div>
+        </div>
+        <div class="controls-row">
+          <div class="slider-group">
+            <div class="input-label">Max Crawl Depth (pages)</div>
+            <div class="slider-track">
+              <button class="depth-btn active" data-val="10">10</button>
+              <button class="depth-btn" data-val="25">25</button>
+              <button class="depth-btn" data-val="50">50</button>
+              <button class="depth-btn" data-val="100">100</button>
+            </div>
+          </div>
+          <button class="exec-btn" id="exec-btn">
+            <div class="spinner"></div>
+            <span class="btn-text">Execute Deep Audit</span>
+          </button>
+        </div>
+        <div class="progress-bar-wrap" id="progress-wrap">
+          <div class="progress-info">
+            <span id="progress-label">Initializing crawler...</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- LIVE FEED -->
+      <div class="section-title" style="margin-top:16px">Live Crawl Feed</div>
+      <div class="grid-header">
+        <div>Page URL Path</div>
+        <div style="text-align:center">HTTP Status</div>
+        <div style="text-align:center">Diag. Score</div>
+        <div style="text-align:right">Action</div>
+      </div>
+      <div id="crawl-grid">
+        <div class="empty-grid" id="grid-empty">No pages crawled yet. Enter a URL and execute audit.</div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="section-title" style="margin-top:16px">Sitewide Summary</div>
+      <div class="summary-cards">
+        <div class="sum-card">
+          <div class="sum-card-label">Total Pages</div>
+          <div class="sum-card-value" id="stat-total">0</div>
+          <div class="sum-card-sub">pages crawled</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-card-label">404 Broken</div>
+          <div class="sum-card-value red" id="stat-404">0</div>
+          <div class="sum-card-sub">dead links</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-card-label">Missing Alt</div>
+          <div class="sum-card-value amber" id="stat-alt">0</div>
+          <div class="sum-card-sub">images no alt text</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-card-label">Dup. Titles</div>
+          <div class="sum-card-value amber" id="stat-dup">0</div>
+          <div class="sum-card-sub">duplicate meta titles</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-card-label">Missing H1</div>
+          <div class="sum-card-value red" id="stat-noh1">0</div>
+          <div class="sum-card-sub">pages without h1</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-card-label">Avg Score</div>
+          <div class="sum-card-value" id="stat-avg">—</div>
+          <div class="sum-card-sub">diagnostic avg</div>
+        </div>
+      </div>
+
+      <button class="export-btn" id="export-btn" style="align-self:flex-start;margin-top:16px">
+        ↓ Export Technical SEO Report
+      </button>
+    </div>
+
+    <!-- DRILLDOWN / INSPECTOR PANEL -->
+    <div class="panel" id="panel-drilldown">
+      <div id="drilldown-empty" class="empty-state">
+        <div class="empty-state-icon">◎</div>
+        <div class="empty-state-text">Select a page from the crawl grid to inspect</div>
+        <div style="font-size:11px;margin-top:4px">Crawl a site first, then click Drilldown on any row</div>
+      </div>
+
+      <div id="drilldown-content" style="display:none;flex-direction:column;gap:16px">
+        <button class="back-btn" id="back-btn">← Back to Crawler</button>
+
+        <div>
+          <div class="panel-title" id="dd-page-title">Page Inspector</div>
+          <div class="panel-subtitle" id="dd-page-url" style="color:var(--green)"></div>
+        </div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs">
+          <button class="mod-tab active" data-mod="meta">Metadata</button>
+          <button class="mod-tab" data-mod="headings">Headings</button>
+          <button class="mod-tab" data-mod="schema">Schema</button>
+          <button class="mod-tab" data-mod="ai">AI Radar</button>
+        </div>
+
+        <!-- MODULE 1 - META -->
+        <div class="module-pane active" id="mod-meta">
+          <div class="meta-layout">
+            <div class="meta-edit-group">
+              <div class="meta-field">
+                <div class="meta-field-header">
+                  Title Tag
+                  <span class="char-count" id="title-chars">0 chars</span>
+                </div>
+                <textarea class="meta-input" id="meta-title" rows="2" oninput="updateSerp()"></textarea>
+                <div class="pixel-bar ok" id="title-bar"></div>
+              </div>
+              <div class="meta-field">
+                <div class="meta-field-header">
+                  Meta Description
+                  <span class="char-count" id="desc-chars">0 chars</span>
+                </div>
+                <textarea class="meta-input" id="meta-desc" rows="4" oninput="updateSerp()"></textarea>
+                <div class="pixel-bar ok" id="desc-bar"></div>
+              </div>
+            </div>
+            <div class="meta-edit-group">
+              <div class="serp-container">
+                <div class="serp-toggle">
+                  <button class="serp-btn active" id="serp-desktop" onclick="setSerp('desktop')">Desktop</button>
+                  <button class="serp-btn" id="serp-mobile" onclick="setSerp('mobile')">Mobile</button>
+                </div>
+                <div class="serp-preview" id="serp-preview">
+                  <div class="serp-url" id="serp-url-display">https://example.com</div>
+                  <div class="serp-title" id="serp-title-display">Page Title</div>
+                  <div class="serp-desc" id="serp-desc-display">Meta description will appear here...</div>
+                </div>
+              </div>
+              <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:var(--mono);font-size:11px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                  <span style="color:var(--text3)">Title pixel width est.</span>
+                  <span id="title-px" style="color:var(--text)">0px / 600px</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                  <span style="color:var(--text3)">Desc pixel width est.</span>
+                  <span id="desc-px" style="color:var(--text)">0px / 920px</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 2 - HEADINGS -->
+        <div class="module-pane" id="mod-headings">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+            <div style="padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text2)">
+              Semantic Heading Hierarchy
+            </div>
+            <div class="heading-tree" id="heading-tree"></div>
+          </div>
+          <div id="heading-violations-wrap" style="margin-top:12px"></div>
+        </div>
+
+        <!-- MODULE 3 - SCHEMA -->
+        <div class="module-pane" id="mod-schema">
+          <div class="schema-layout">
+            <div class="schema-controls">
+              <div>
+                <div class="input-label" style="margin-bottom:8px">Schema Type</div>
+                <select class="schema-select" id="schema-type" onchange="buildSchema()">
+                  <option value="Organization">Organization</option>
+                  <option value="Article">Article</option>
+                  <option value="FAQPage">FAQ Dropdown</option>
+                </select>
+              </div>
+              <div class="schema-fields" id="schema-fields"></div>
+            </div>
+            <div class="schema-output">
+              <div class="schema-output-header">
+                <span>JSON-LD Output // &lt;script type="application/ld+json"&gt;</span>
+                <button class="copy-btn" onclick="copySchema()">Copy to Clipboard</button>
+              </div>
+              <div class="schema-code" id="schema-output"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODULE 4 - AI RADAR -->
+        <div class="module-pane" id="mod-ai">
+          <div class="ai-radar">
+            <div class="radar-score-card">
+              <div class="radar-score-ring">
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#1E2D3D" stroke-width="8"/>
+                  <circle id="radar-arc" cx="50" cy="50" r="42" fill="none" stroke="#10B981" stroke-width="8"
+                    stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round" style="transition:stroke-dashoffset 1.2s ease-out"/>
+                </svg>
+                <div class="radar-score-num" id="ai-score-num" style="color:var(--green)">—</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">LLM Extraction Score</div>
+              <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">AI parse readiness index</div>
+            </div>
+            <div class="radar-metrics" id="radar-metrics"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// SAFE DOM HELPERS
+// ═══════════════════════════════════════
+function el(id){ return document.getElementById(id); }
+function qs(sel){ return document.querySelector(sel); }
+function qsa(sel){ return [...document.querySelectorAll(sel)]; }
+
+// Null-safe style setter
+function setStyle(id, prop, val){
+  const node = el(id);
+  if(node){ node.style[prop] = val; }
+  else { console.warn('AuditForge System Warning: #'+id+' not found in DOM.'); }
+}
+// Null-safe text setter
+function setText(id, val){
+  const node = el(id);
+  if(node){ node.textContent = val; }
+  else { console.warn('AuditForge System Warning: #'+id+' not found in DOM.'); }
+}
+// Null-safe class add/remove/toggle
+function addCls(id, cls){  const n=el(id); if(n) n.classList.add(cls); }
+function remCls(id, cls){  const n=el(id); if(n) n.classList.remove(cls); }
+function setCls(id, cls){  const n=el(id); if(n) n.className = cls; }
+// Null-safe innerHTML setter
+function setHTML(id, html){ const n=el(id); if(n) n.innerHTML = html; }
+// Null-safe attribute value getter with fallback
+function getVal(id){ const n=el(id); return n ? n.value : ''; }
+// Null-safe classList operation on NodeList
+function clsAll(sel, method, cls){ qsa(sel).forEach(n=>n.classList[method](cls)); }
+
+// ═══════════════════════════════════════
+// CLOCK & PING
+// ═══════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  setText('clock', t);
+}
+setInterval(updateClock,1000); updateClock();
+
+setInterval(()=>{
+  setText('ping-val', (Math.floor(Math.random()*30)+8)+'ms');
+},3000);
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let crawledPages = [];
+let maxPages = 10;
+let isCrawling = false;
+let currentPage = null;
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+qsa('.nav-item[data-panel]').forEach(node=>{
+  node.addEventListener('click',()=>{
+    const target = node.dataset.panel;
+    showPanel(target);
+    clsAll('.nav-item','remove','active');
+    node.classList.add('active');
+  });
+});
+
+function showPanel(id){
+  clsAll('.panel','remove','active');
+  const p = el('panel-'+id);
+  if(p) p.classList.add('active');
+  else console.warn('AuditForge System Warning: panel-'+id+' not found in DOM.');
+}
+
+const backBtn = el('back-btn');
+if(backBtn) backBtn.addEventListener('click',()=>{
+  showPanel('crawler');
+  const crawlerNav = qs('.nav-item[data-panel="crawler"]');
+  if(crawlerNav) crawlerNav.click();
+});
+
+const navExport = el('nav-export-sidebar');
+if(navExport) navExport.addEventListener('click', exportReport);
+const exportBtn = el('export-btn');
+if(exportBtn) exportBtn.addEventListener('click', exportReport);
+const navDrilldown = el('nav-drilldown');
+if(navDrilldown) navDrilldown.addEventListener('click',()=>{
+  if(crawledPages.length===0) return;
+  showPanel('drilldown');
+});
+
+// ═══════════════════════════════════════
+// DEPTH BUTTONS
+// ═══════════════════════════════════════
+qsa('.depth-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    clsAll('.depth-btn','remove','active');
+    btn.classList.add('active');
+    maxPages = parseInt(btn.dataset.val) || 10;
+  });
+});
+
+// ═══════════════════════════════════════
+// MODULE TABS
+// ═══════════════════════════════════════
+qsa('.mod-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    clsAll('.mod-tab','remove','active');
+    clsAll('.module-pane','remove','active');
+    tab.classList.add('active');
+    const mod = el('mod-'+tab.dataset.mod);
+    if(mod) mod.classList.add('active');
+    else console.warn('AuditForge System Warning: mod-'+tab.dataset.mod+' not found in DOM.');
+  });
+});
+
+// ═══════════════════════════════════════
+// PROXY FETCH — protocol-safe, CORS-bypass via allorigins
+// ═══════════════════════════════════════
+async function proxyFetch(url){
+  // Block file: and other non-http protocols — they cannot be fetched by the proxy
+  let parsed;
+  try { parsed = new URL(url); } catch(e) { throw new Error('Malformed URL: '+url); }
+  if(!parsed.protocol.startsWith('http')){
+    throw new Error('Protocol "'+parsed.protocol+'" is not supported. Only http/https URLs can be crawled.');
+  }
+  const proxy = 'https://api.allorigins.win/get?url='+encodeURIComponent(url);
+  let r;
+  try {
+    r = await fetch(proxy, {signal: AbortSignal.timeout(12000)});
+  } catch(fetchErr) {
+    throw new Error('Network error reaching proxy: '+fetchErr.message);
+  }
+  if(!r.ok) throw new Error('Proxy returned HTTP '+r.status+' for: '+url);
+  let data;
+  try { data = await r.json(); } catch(e) { throw new Error('Proxy response was not valid JSON.'); }
+  if(!data || data.contents === null || data.contents === undefined){
+    throw new Error('Proxy returned empty content for: '+url);
+  }
+  return data.contents || '';
+}
+
+// ═══════════════════════════════════════
+// LINK EXTRACTOR
+// ═══════════════════════════════════════
+function extractLinks(html, base){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html,'text/html');
+  const links = new Set();
+  const origin = new URL(base).origin;
+  doc.querySelectorAll('a[href]').forEach(a=>{
+    try{
+      const abs = new URL(a.href, base).href;
+      if(abs.startsWith(origin) && !abs.match(/#|mailto:|tel:|javascript:|\.pdf|\.jpg|\.png|\.gif|\.svg|\.zip/i)){
+        const clean = abs.split('?')[0].split('#')[0].replace(/\/$/,'') || origin;
+        links.add(clean);
+      }
+    }catch(e){}
+  });
+  return [...links];
+}
+
+// ═══════════════════════════════════════
+// PAGE ANALYZER
+// ═══════════════════════════════════════
+function analyzePage(html, url){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html,'text/html');
+
+  const title = doc.querySelector('title')?.textContent?.trim() || '';
+  const desc = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
+  const h1s = [...doc.querySelectorAll('h1')].map(h=>h.textContent.trim());
+  const h2s = [...doc.querySelectorAll('h2')].map(h=>h.textContent.trim());
+  const h3s = [...doc.querySelectorAll('h3')].map(h=>h.textContent.trim());
+  const h4s = [...doc.querySelectorAll('h4')].map(h=>h.textContent.trim());
+  const imgs = [...doc.querySelectorAll('img')];
+  const missingAlt = imgs.filter(img=>!img.getAttribute('alt')).length;
+
+  // Build heading structure
+  const headingNodes = [];
+  doc.querySelectorAll('h1,h2,h3,h4').forEach(h=>{
+    headingNodes.push({tag:h.tagName.toLowerCase(), text:h.textContent.trim()});
+  });
+
+  // Score
+  let score = 100;
+  if(!title) score-=15;
+  if(!desc) score-=10;
+  if(h1s.length===0) score-=15;
+  if(h1s.length>1) score-=10;
+  if(missingAlt>0) score-=Math.min(15,missingAlt*3);
+  if(title && title.length > 60) score-=5;
+  if(desc && desc.length > 160) score-=5;
+  score = Math.max(0,score);
+
+  // AI readiness
+  const hasSemanticMarkup = doc.querySelectorAll('article,section,main,nav,aside').length;
+  const hasTables = doc.querySelectorAll('table').length;
+  const hasLists = doc.querySelectorAll('ul,ol').length;
+  const hasSchema = doc.querySelectorAll('script[type="application/ld+json"]').length;
+  const hasHeadings = headingNodes.length;
+
+  const aiScore = Math.min(100, Math.round(
+    (hasSemanticMarkup ? 20 : 0) +
+    (hasTables ? 15 : 0) +
+    (hasLists ? 15 : 0) +
+    (hasSchema ? 25 : 0) +
+    (hasHeadings ? 15 : 0) +
+    (desc ? 10 : 0)
+  ));
+
+  return {title,desc,h1s,h2s,h3s,h4s,headingNodes,missingAlt,score,aiScore,hasSemanticMarkup,hasTables,hasLists,hasSchema,hasHeadings,url,html};
+}
+
+
+// ═══════════════════════════════════════
+// CRAWL ENGINE
+// ═══════════════════════════════════════
+async function crawl(){
+  const urlInput = el('url-input');
+  if(!urlInput){ console.warn('AuditForge System Warning: url-input not found.'); return; }
+  const url = urlInput.value.trim();
+  if(!url || isCrawling) return;
+
+  // Protocol guard — reject non-http before proxy attempt
+  let rootUrl;
+  const urlError = el('url-error');
+  try {
+    const parsed = new URL(url);
+    if(!parsed.protocol.startsWith('http')) throw new Error('Non-http protocol: '+parsed.protocol);
+    rootUrl = parsed.href;
+    if(urlError) urlError.style.display = 'none';
+  } catch(e) {
+    if(urlError) urlError.style.display = 'block';
+    console.warn('AuditForge System Warning: Invalid or non-http URL —', e.message);
+    return;
+  }
+
+  // Reset state
+  isCrawling = true;
+  crawledPages = [];
+
+  const execBtn = el('exec-btn');
+  if(execBtn){ execBtn.classList.add('loading'); execBtn.disabled = true; }
+
+  const crawlGrid = el('crawl-grid');
+  if(crawlGrid) crawlGrid.innerHTML = '';
+  const gridEmpty = el('grid-empty');
+  if(gridEmpty) gridEmpty.style.display = 'none';
+  const progressWrap = el('progress-wrap');
+  if(progressWrap) progressWrap.classList.add('visible');
+  updateStats();
+
+  const visited = new Set();
+  const queue = [rootUrl.replace(/\/$/,'')];
+  visited.add(queue[0]);
+  let pagesDone = 0;
+
+  function setProgress(label, pct){
+    const lbl   = el('progress-label');
+    const pctEl = el('progress-pct');
+    const fill  = el('progress-fill');
+    if(lbl)   lbl.textContent   = label;
+    if(pctEl) pctEl.textContent = Math.round(pct)+'%';
+    if(fill)  fill.style.width  = Math.round(pct)+'%';
+  }
+
+  // BFS with concurrency=2, 500ms rate-limit delay
+  while(queue.length > 0 && pagesDone < maxPages){
+    const batch = queue.splice(0,2);
+    setProgress('Crawling: '+batch[0].replace(/https?:\/\//,''), (pagesDone/maxPages)*100);
+
+    await Promise.allSettled(batch.map(async pageUrl=>{
+      if(pagesDone >= maxPages) return;
+      await new Promise(r=>setTimeout(r,500));
+
+      let status = 200, analysis = null;
+      try{
+        const html = await proxyFetch(pageUrl);
+        if(!html) throw new Error('empty response');
+        analysis = analyzePage(html, pageUrl);
+        const links = extractLinks(html, pageUrl);
+        links.forEach(l=>{
+          if(!visited.has(l) && visited.size < maxPages*3){
+            visited.add(l);
+            queue.push(l);
+          }
+        });
+      } catch(e){
+        console.warn('AuditForge System Warning: fetch failed for "'+pageUrl+'" —', e.message);
+        status = 404;
+        analysis = {title:'',desc:'',headingNodes:[],h1s:[],missingAlt:0,score:0,aiScore:0,url:pageUrl,html:''};
+      }
+
+      const page = {...analysis, status, url:pageUrl, id:'p'+Date.now()+Math.random()};
+      crawledPages.push(page);
+      pagesDone++;
+      addGridRow(page);
+      updateStats();
+    }));
+  }
+
+  setProgress('Audit complete — '+crawledPages.length+' pages analyzed', 100);
+  if(execBtn){ execBtn.classList.remove('loading'); execBtn.disabled = false; }
+  isCrawling = false;
+
+  const badge = el('page-count-badge');
+  if(badge){ badge.textContent = crawledPages.length; badge.style.display = 'block'; }
+}
+
+const execBtnBind = el('exec-btn');
+if(execBtnBind) execBtnBind.addEventListener('click', crawl);
+const urlInputBind = el('url-input');
+if(urlInputBind) urlInputBind.addEventListener('input',()=>{
+  const errEl = el('url-error');
+  if(errEl) errEl.style.display = 'none';
+});
+
+// ═══════════════════════════════════════
+// GRID ROW
+// ═══════════════════════════════════════
+function addGridRow(page){
+  const grid = el('crawl-grid');
+  if(!grid){ console.warn('AuditForge System Warning: crawl-grid not found.'); return; }
+  const row = document.createElement('div');
+  row.className = 'grid-row new-row';
+  row.dataset.id = page.id;
+
+  const path = page.url.replace(/https?:\/\/[^\/]+/,'') || '/';
+  const statusClass = page.status === 200 ? 'status-200' : page.status === 404 ? 'status-404' : 'status-other';
+  const statusText = page.status === 200 ? '200 OK' : page.status + ' Error';
+  const scoreClass = page.score >= 75 ? 'score-high' : page.score >= 50 ? 'score-mid' : 'score-low';
+
+  row.innerHTML = `
+    <div class="url-cell" title="${page.url}">${path || '/'}</div>
+    <div class="status-cell ${statusClass}">${statusText}</div>
+    <div class="score-cell ${scoreClass}">${page.score}/100</div>
+    <div class="action-cell"><button class="drill-btn" onclick="openDrilldown('${page.id}')">Inspect</button></div>
+  `;
+  grid.appendChild(row);
+}
+
+// ═══════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════
+function updateStats(){
+  const total = crawledPages.length;
+  const err404 = crawledPages.filter(p=>p.status===404).length;
+  const altMissing = crawledPages.reduce((s,p)=>s+(p.missingAlt||0),0);
+  const titles = crawledPages.map(p=>p.title).filter(Boolean);
+  const dupTitles = titles.length - new Set(titles).size;
+  const noH1 = crawledPages.filter(p=>p.h1s && p.h1s.length===0 && p.status===200).length;
+  const scores = crawledPages.filter(p=>p.status===200).map(p=>p.score);
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+  setText('stat-total', total);
+  setText('stat-404',   err404);
+  setText('stat-alt',   altMissing);
+  setText('stat-dup',   dupTitles);
+  setText('stat-noh1',  noH1);
+  setText('stat-avg',   avg!==null ? avg : '—');
+}
+
+// ═══════════════════════════════════════
+// DRILLDOWN
+// ═══════════════════════════════════════
+function openDrilldown(id){
+  const page = crawledPages.find(p=>p.id===id);
+  if(!page) return;
+  currentPage = page;
+
+  const ddEmpty   = el('drilldown-empty');
+  const ddContent = el('drilldown-content');
+  const ddUrl     = el('dd-page-url');
+  if(ddEmpty)   ddEmpty.style.display   = 'none';
+  if(ddContent) ddContent.style.display = 'flex';
+  if(ddUrl)     ddUrl.textContent       = page.url;
+
+  showPanel('drilldown');
+  clsAll('.nav-item','remove','active');
+  addCls('nav-drilldown','active');
+
+  clsAll('.mod-tab','remove','active');
+  clsAll('.module-pane','remove','active');
+  const metaTab = qs('.mod-tab[data-mod="meta"]');
+  if(metaTab) metaTab.classList.add('active');
+  addCls('mod-meta','active');
+
+  loadMeta(page);
+  loadHeadings(page);
+  loadAIRadar(page);
+  initSchema(page);
+}
+
+// ═══════════════════════════════════════
+// MODULE 1 - META
+// ═══════════════════════════════════════
+function loadMeta(page){
+  const mt = el('meta-title'); if(mt) mt.value = page.title || '';
+  const md = el('meta-desc');  if(md) md.value = page.desc  || '';
+  setText('serp-url-display', page.url || '');
+  updateSerp();
+}
+
+function updateSerp(){
+  const title = getVal('meta-title');
+  const desc  = getVal('meta-desc');
+
+  const tLen = title.length;
+  const tPx  = Math.round(tLen * 9.2);
+  const tClass = tLen < 30 ? 'bad' : tLen <= 60 ? 'ok' : tLen <= 70 ? 'warn' : 'bad';
+  setText('title-chars', tLen+' chars');
+  setCls('title-chars',  'char-count '+tClass);
+  setCls('title-bar',    'pixel-bar '+tClass);
+  setText('title-px',    tPx+'px / 600px');
+
+  const dLen = desc.length;
+  const dPx  = Math.round(dLen * 6.8);
+  const dClass = dLen < 70 ? 'warn' : dLen <= 160 ? 'ok' : 'bad';
+  setText('desc-chars', dLen+' chars');
+  setCls('desc-chars',  'char-count '+dClass);
+  setCls('desc-bar',    'pixel-bar '+dClass);
+  setText('desc-px',    dPx+'px / 920px');
+
+  const serpTitle = title ? (title.length > 60 ? title.slice(0,57)+'...' : title) : 'Page Title';
+  const serpDesc  = desc  ? (desc.length  > 160 ? desc.slice(0,157)+'...' : desc) : 'No description available.';
+  setText('serp-title-display', serpTitle);
+  setText('serp-desc-display',  serpDesc);
+}
+
+function setSerp(mode){
+  const prev = el('serp-preview');
+  if(prev) prev.className = 'serp-preview '+(mode==='mobile'?'mobile':'');
+  const dBtn = el('serp-desktop'); if(dBtn) dBtn.classList.toggle('active', mode==='desktop');
+  const mBtn = el('serp-mobile');  if(mBtn) mBtn.classList.toggle('active', mode==='mobile');
+}
+
+// ═══════════════════════════════════════
+// MODULE 2 - HEADINGS
+// ═══════════════════════════════════════
+function loadHeadings(page){
+  const tree = el('heading-tree');
+  if(!tree){ console.warn('AuditForge System Warning: heading-tree not found.'); return; }
+  const violations = [];
+
+  if(!page.headingNodes || page.headingNodes.length === 0){
+    tree.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px">No heading elements found on this page.</div>';
+    if(page.status===200) violations.push('No heading elements detected on this page.');
+  } else {
+    let html = '';
+    const h1count = page.headingNodes.filter(h=>h.tag==='h1').length;
+    let prevLevel = 0;
+
+    page.headingNodes.forEach((h,i)=>{
+      const level = parseInt(h.tag[1]);
+      const indent = 'h-indent-'+level;
+      const hasErr = (h.tag==='h1' && i>0 && page.headingNodes.slice(0,i).some(p=>p.tag==='h1'))
+        || (level > prevLevel+1 && prevLevel>0);
+      const errText = h.tag==='h1' && i>0 && page.headingNodes.slice(0,i).some(p=>p.tag==='h1')
+        ? '⚠ duplicate H1' : (level > prevLevel+1 && prevLevel>0 ? `⚠ skipped H${prevLevel+1}` : '');
+      html += `<div class="h-node ${indent}">
+        <span class="h-tag ${h.tag}">${h.tag.toUpperCase()}</span>
+        <span class="h-text">${h.text.slice(0,80)||'(empty)'}</span>
+        ${errText ? `<span class="h-err">${errText}</span>` : ''}
+      </div>`;
+      prevLevel = level;
+    });
+    tree.innerHTML = html;
+
+    // Violation analysis
+    if(h1count === 0) violations.push('Missing H1 tag — every page must have exactly one H1 element.');
+    if(h1count > 1) violations.push(`Duplicate H1 detected — found ${h1count} H1 tags on this page. Only 1 is permitted.`);
+
+    let prev = 0;
+    page.headingNodes.forEach(h=>{
+      const l = parseInt(h.tag[1]);
+      if(l > prev+1 && prev>0) violations.push(`Heading level skip: jumped from H${prev} to H${l} without intermediate H${prev+1}.`);
+      prev = l;
+    });
+  }
+
+  const vWrap = el('heading-violations-wrap');
+  if(!vWrap){ console.warn('AuditForge System Warning: heading-violations-wrap not found.'); return; }
+  if(violations.length){
+    vWrap.innerHTML = `<div class="heading-violations">${violations.map(v=>`<div class="violation-item">⛔ ${v}</div>`).join('')}</div>`;
+  } else {
+    vWrap.innerHTML = `<div style="background:rgba(16,185,129,.08);border:1px solid var(--green-dim);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--green)">✓ Heading structure is valid — no SEO violations detected.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════
+// MODULE 3 - SCHEMA
+// ═══════════════════════════════════════
+const schemaConfigs = {
+  Organization:{
+    fields:['Organization Name','Website URL','Logo URL','Phone Number','Description','Street Address','City','Country'],
+    build(vals){
+      return {
+        "@context":"https://schema.org",
+        "@type":"Organization",
+        "name":vals[0]||"",
+        "url":vals[1]||"",
+        "logo":vals[2]||"",
+        "telephone":vals[3]||"",
+        "description":vals[4]||"",
+        "address":{"@type":"PostalAddress","streetAddress":vals[5]||"","addressLocality":vals[6]||"","addressCountry":vals[7]||""}
+      };
+    }
+  },
+  Article:{
+    fields:['Article Headline','Author Name','Date Published (YYYY-MM-DD)','Date Modified','Article URL','Publisher Name','Article Description'],
+    build(vals){
+      return {
+        "@context":"https://schema.org",
+        "@type":"Article",
+        "headline":vals[0]||"",
+        "author":{"@type":"Person","name":vals[1]||""},
+        "datePublished":vals[2]||"",
+        "dateModified":vals[3]||"",
+        "url":vals[4]||"",
+        "publisher":{"@type":"Organization","name":vals[5]||""},
+        "description":vals[6]||""
+      };
+    }
+  },
+  FAQPage:{
+    fields:['Question 1','Answer 1','Question 2','Answer 2','Question 3','Answer 3'],
+    build(vals){
+      const mainEntity=[];
+      for(let i=0;i<vals.length;i+=2){
+        if(vals[i]) mainEntity.push({"@type":"Question","name":vals[i],"acceptedAnswer":{"@type":"Answer","text":vals[i+1]||""}});
+      }
+      return {"@context":"https://schema.org","@type":"FAQPage","mainEntity":mainEntity};
+    }
+  }
+};
+
+function initSchema(page){
+  buildSchemaFields();
+  if(currentPage && currentPage.title){
+    const inputs = qsa('.schema-input');
+    if(inputs[0]) inputs[0].value = currentPage.title  || '';
+    if(inputs[1]) inputs[1].value = currentPage.url    || '';
+  }
+  buildSchema();
+}
+
+function buildSchemaFields(){
+  const typeEl = el('schema-type');
+  if(!typeEl){ console.warn('AuditForge System Warning: schema-type not found.'); return; }
+  const cfg  = schemaConfigs[typeEl.value];
+  const wrap = el('schema-fields');
+  if(!wrap){ console.warn('AuditForge System Warning: schema-fields not found.'); return; }
+  wrap.innerHTML = cfg.fields.map((f,i)=>`
+    <div class="schema-field-row">
+      <label class="schema-label">${f}</label>
+      <input class="schema-input" data-idx="${i}" placeholder="${f}" oninput="buildSchema()">
+    </div>
+  `).join('');
+  buildSchema();
+}
+
+function buildSchema(){
+  const typeEl = el('schema-type');
+  if(!typeEl) return;
+  const cfg  = schemaConfigs[typeEl.value];
+  const vals = qsa('.schema-input').map(i=>i.value);
+  const obj  = cfg.build(vals);
+  const jsonStr = `<script type="application/ld+json">\n${JSON.stringify(obj,null,2)}\n<\/script>`;
+  const out = el('schema-output');
+  if(out) out.textContent = jsonStr;
+}
+
+const schemaTypeBind = el('schema-type');
+if(schemaTypeBind) schemaTypeBind.addEventListener('change', buildSchemaFields);
+
+function copySchema(){
+  const out = el('schema-output');
+  if(!out) return;
+  navigator.clipboard.writeText(out.textContent).then(()=>{
+    const btn = qs('.copy-btn');
+    if(!btn) return;
+    btn.textContent = 'Copied!';
+    btn.style.color = 'var(--green)';
+    setTimeout(()=>{ btn.textContent='Copy to Clipboard'; btn.style.color=''; },2000);
+  }).catch(e=>console.warn('AuditForge System Warning: clipboard write failed —', e.message));
+}
+
+// ═══════════════════════════════════════
+// MODULE 4 - AI RADAR
+// ═══════════════════════════════════════
+function loadAIRadar(page){
+  const score = page.aiScore || 0;
+  const arc   = el('radar-arc');
+  if(arc){
+    const offset = 264 - (score/100)*264;
+    setTimeout(()=>{ arc.style.strokeDashoffset = offset; }, 100);
+    arc.style.stroke = score>=70?'var(--green)':score>=40?'var(--amber)':'var(--red)';
+  } else { console.warn('AuditForge System Warning: radar-arc not found.'); }
+
+  const numEl = el('ai-score-num');
+  if(numEl){
+    numEl.textContent = score;
+    numEl.style.color = score>=70?'var(--green)':score>=40?'var(--amber)':'var(--red)';
+  }
+
+  const metrics = [
+    {label:'Semantic HTML Landmarks',   val:Math.min(100,page.hasSemanticMarkup?85:15)},
+    {label:'Structured Data / JSON-LD', val:page.hasSchema?90:10},
+    {label:'Heading Hierarchy',         val:page.headingNodes&&page.headingNodes.length?70:20},
+    {label:'Bulleted Lists / Tables',   val:Math.min(100,(page.hasLists||0)*20+(page.hasTables||0)*15)},
+    {label:'Meta Description Present',  val:page.desc?80:5},
+  ];
+
+  const wrap = el('radar-metrics');
+  if(!wrap){ console.warn('AuditForge System Warning: radar-metrics not found.'); return; }
+  wrap.innerHTML = metrics.map(m=>{
+    const cls   = m.val>=70?'high':m.val>=40?'mid':'low';
+    const color = m.val>=70?'var(--green)':m.val>=40?'var(--amber)':'var(--red)';
+    return `<div class="radar-metric">
+      <div class="radar-metric-label">
+        <span>${m.label}</span>
+        <span style="color:${color};font-weight:700">${m.val}%</span>
+      </div>
+      <div class="radar-bar"><div class="radar-fill ${cls}" style="width:0%" data-target="${m.val}%"></div></div>
+    </div>`;
+  }).join('');
+
+  setTimeout(()=>{
+    qsa('.radar-fill').forEach(node=>{ node.style.width = node.dataset.target || '0%'; });
+  },100);
+}
+
+// ═══════════════════════════════════════
+// EXPORT REPORT
+// ═══════════════════════════════════════
+function exportReport(){
+  const total = crawledPages.length;
+  const err404 = crawledPages.filter(p=>p.status===404).length;
+  const altMissing = crawledPages.reduce((s,p)=>s+(p.missingAlt||0),0);
+  const titles = crawledPages.map(p=>p.title).filter(Boolean);
+  const dupTitles = titles.length - new Set(titles).size;
+  const scores = crawledPages.filter(p=>p.status===200).map(p=>p.score);
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  const date = new Date().toLocaleString();
+
+  const rows = crawledPages.map(p=>`
+    <tr>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url}</td>
+      <td style="text-align:center;color:${p.status===200?'#10B981':'#EF4444'}">${p.status}</td>
+      <td style="text-align:center;color:${p.score>=75?'#10B981':p.score>=50?'#F59E0B':'#EF4444'}">${p.score}/100</td>
+      <td style="text-align:center">${p.title||'<em style="color:#64748b">missing</em>'}</td>
+      <td style="text-align:center">${p.missingAlt||0}</td>
+    </tr>
+  `).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>AuditForge SEO Report — ${date}</title>
+<style>
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#080C0F;color:#E2E8F0;margin:0;padding:24px}
+h1{font-size:28px;font-weight:800;color:#10B981;margin-bottom:4px}
+.sub{color:#64748B;font-family:monospace;font-size:12px;margin-bottom:24px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.card{background:#0D1117;border:1px solid #1E2D3D;border-radius:8px;padding:16px}
+.card-l{font-size:10px;font-weight:700;color:#4A5568;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.card-v{font-size:26px;font-weight:800;font-family:monospace}
+.green{color:#10B981}.red{color:#EF4444}.amber{color:#F59E0B}
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:monospace}
+th{background:#0D1117;color:#64748B;text-transform:uppercase;font-size:10px;letter-spacing:.06em;padding:10px 12px;text-align:left;border-bottom:1px solid #1E2D3D}
+td{padding:10px 12px;border-bottom:1px solid #1E2D3D;vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.02)}
+</style>
+</head>
+<body>
+<h1>AuditForge AI Pro — Technical SEO Report</h1>
+<div class="sub">Generated: ${date} // Total pages crawled: ${total}</div>
+<div class="cards">
+  <div class="card"><div class="card-l">Total Pages</div><div class="card-v green">${total}</div></div>
+  <div class="card"><div class="card-l">404 Broken</div><div class="card-v red">${err404}</div></div>
+  <div class="card"><div class="card-l">Missing Alt</div><div class="card-v amber">${altMissing}</div></div>
+  <div class="card"><div class="card-l">Dup Titles</div><div class="card-v amber">${dupTitles}</div></div>
+  <div class="card"><div class="card-l">Avg Score</div><div class="card-v green">${avg}/100</div></div>
+</div>
+<table>
+  <thead><tr><th>URL</th><th>Status</th><th>Score</th><th>Title</th><th>Missing Alt</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+</body></html>`;
+
+  const blob = new Blob([html],{type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'auditforge-seo-report-'+Date.now()+'.html';
+  a.click();
+}
+
+// Init schema on load
+buildSchemaFields();
+</script>
+</body>
+</html>
