@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contact — AuditForge AI</title>
-<meta name="description" content="Get in touch with the AuditForge AI team.">
+<title>About — AuditForge AI</title>
+<meta name="description" content="AuditForge AI — what we do and why we built it.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -27,13 +27,10 @@ main{max-width:880px;margin:0 auto;padding:80px 24px 60px}
 h1{font-size:clamp(36px,5vw,60px);font-weight:800;line-height:1.05;letter-spacing:-.02em}
 h1 em{font-style:normal;color:var(--green)}
 .lead{margin-top:18px;font-size:18px;color:var(--text2);max-width:640px;line-height:1.55}
-.row{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:50px}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:50px}
 .card{background:var(--bg2);border:1px solid var(--border);padding:22px;border-radius:6px}
-.label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--text3);text-transform:uppercase}
-.value{margin-top:8px;font-family:var(--mono);font-size:15px;color:var(--green);word-break:break-all}
-.value a:hover{text-decoration:underline}
-.note{margin-top:50px;padding:22px;border:1px dashed var(--green-dim);border-radius:6px;color:var(--text2);font-size:14px}
-.note b{color:var(--green)}
+.card h3{font-size:16px;color:var(--green);margin-bottom:8px;font-family:var(--mono);letter-spacing:.05em}
+.card p{color:var(--text2);font-size:14px;line-height:1.6}
 footer{border-top:1px solid var(--border);background:var(--bg2);padding:18px 24px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:80px}
 footer .heart{color:var(--green)}
 </style>
@@ -41,37 +38,27 @@ footer .heart{color:var(--green)}
 <body>
 <header>
   <div class="nav">
-    <a href="index.html" class="brand">AuditForge<span> AI</span></a>
+    <a href="index" class="brand">AuditForge<span> AI</span></a>
     <ul>
-      <li><a class="link" href="index.html">Home</a></li>
-      <li><a class="link" href="about.html">About</a></li>
-      <li><a class="link" href="services.html">Services</a></li>
-      <li><a class="link active" href="contact.html">Contact</a></li>
+      <li><a class="link" href="index">Home</a></li>
+      <li><a class="link active" href="about">About</a></li>
+      <li><a class="link" href="services">Services</a></li>
+      <li><a class="link" href="contact">Contact</a></li>
     </ul>
-    <a class="cta" href="services.html">Audit a site →</a>
+    <a class="cta" href="services">Audit a site →</a>
   </div>
 </header>
 <main>
-  <div class="kicker">// Contact</div>
-  <h1>Let's <em>talk.</em></h1>
-  <p class="lead">Questions, bugs, feedback, or a tricky site you want audited — drop a line. One inbox, one human, replies within a day.</p>
+  <div class="kicker">// About</div>
+  <h1>We audit websites — <em>automatically.</em></h1>
+  <p class="lead">AuditForge AI is an open, AI-assisted crawler that scans any public website for SEO, accessibility, performance and security issues — and gives you a fix for every finding. Totally free while we're in beta.</p>
 
-  <div class="row">
-    <div class="card">
-      <div class="label">Email</div>
-      <div class="value"><a href="mailto:kamayegabharat@gmail.com">kamayegabharat@gmail.com</a></div>
-    </div>
-    <div class="card">
-      <div class="label">Pricing</div>
-      <div class="value">Totally free</div>
-    </div>
-    <div class="card">
-      <div class="label">Response time</div>
-      <div class="value">≤ 24 hours</div>
-    </div>
+  <div class="grid">
+    <div class="card"><h3>Paste a URL</h3><p>No accounts, no installs. Drop a domain into the crawler and we walk the site for you.</p></div>
+    <div class="card"><h3>Get a verdict</h3><p>Every page is scored across multiple engines — SEO, A11y, Performance, Security, Content.</p></div>
+    <div class="card"><h3>Ship a fix</h3><p>Each issue ships with a concrete recommendation, not a vague warning.</p></div>
+    <div class="card"><h3>Built in the open</h3><p>One developer, one stack, zero gatekeeping. Use it as much as you want.</p></div>
   </div>
-
-  <div class="note"><b>Heads up —</b> AuditForge AI is <b>totally free</b> for now. No invoices, no plans, no credit cards. Just send the URL you want audited and we'll handle the rest.</div>
 </main>
 <footer>© <span id="y"></span> AuditForge AI — Made with <span class="heart">♥</span> from Sourav Bagchi</footer>
 <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
