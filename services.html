@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><title>AuditForge AI Pro – Free SEO & AI Visibility Auditor</title></title>
+<title>AuditForge AI Pro – Free SEO & AI Visibility Auditor</title>
   <meta name="description" content="Free SEO, AI Visibility and Website Audit Tool. Analyze metadata, headings, accessibility, structured data and AI readiness.">
 
 <link rel="canonical" href="https://audit-forge-ai.github.io/services.html">
@@ -30,6 +30,8 @@
   --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
+/* Mobile base override */
+@media(max-width:768px){html,body{height:auto;overflow:auto}}
 button{cursor:pointer;font-family:var(--sans);border:none}
 input,select,textarea{font-family:var(--mono);outline:none}
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -200,51 +202,156 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
 .afill{height:100%;border-radius:2px;transition:width 1s ease-out}
 .afill.hi{background:var(--green)}.afill.mi{background:var(--amber)}.afill.lo{background:var(--red)}
 
+/* ── MOBILE HAMBURGER BUTTON ── */
+#menuToggle{
+  display:none;
+  position:fixed;
+  top:40px;
+  left:12px;
+  z-index:200;
+  width:38px;height:38px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:7px;
+  align-items:center;justify-content:center;
+  cursor:pointer;
+  font-size:18px;
+  color:var(--text2);
+  transition:all .15s;
+  line-height:1;
+  padding:0;
+}
+#menuToggle:hover{border-color:var(--green);color:var(--green)}
+
+/* Overlay behind open sidebar on mobile */
+#sidebarOverlay{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.6);
+  z-index:150;
+}
+
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
+  html,body{
+    height:auto;
+    overflow:auto;
+    overflow-x:hidden;
+  }
 
+  /* Show hamburger button */
+  #menuToggle{
+    display:flex;
+  }
+
+  /* Sidebar slides in as a drawer */
   #sidebar{
-    display:none;
+    position:fixed;
+    top:0;left:0;bottom:0;
+    width:240px;
+    z-index:160;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    display:flex !important;
+  }
+  #sidebar.open{
+    transform:translateX(0);
+  }
+
+  /* Show overlay when sidebar is open */
+  #sidebarOverlay.open{
+    display:block;
   }
 
   #app{
     display:block;
     height:auto;
+    min-height:100vh;
+    overflow:visible;
   }
 
   #main{
     width:100%;
+    height:auto;
+    overflow:visible;
     overflow-x:hidden;
   }
 
-  .meta-layout,
+  /* Panels scroll naturally */
+  .panel{
+    overflow-y:visible;
+    max-height:none;
+    padding:16px 14px;
+    padding-top:52px; /* space for hamburger button */
+  }
+  .panel.active{
+    display:flex;
+  }
+
+  /* Status bar smaller on mobile */
+  #statusbar{
+    font-size:9px;
+    padding:0 10px 0 56px; /* left padding for hamburger */
+    overflow:hidden;
+  }
+  .enterprise-badge{
+    font-size:8px;
+    padding:2px 6px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:160px;
+  }
+
+  /* Two-column grids collapse */
+  .meta-grid,
   .schema-layout,
-  .ai-radar{
-    grid-template-columns:1fr;
+  .ai-layout{
+    grid-template-columns:1fr !important;
   }
 
-  .summary-cards{
-    grid-template-columns:1fr;
+  .sum-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
   }
 
-  .grid-header,
+  /* Data grid: hide action column, shrink others */
+  .grid-head{
+    grid-template-columns:1fr 64px 64px 0 !important;
+    font-size:9px;
+  }
   .grid-row{
-    grid-template-columns:1fr 70px 60px 60px;
+    grid-template-columns:1fr 64px 64px 0 !important;
     font-size:10px;
   }
-
-  .crawler-card{
-    padding:12px;
+  .grid-head > div:last-child,
+  .grid-row > .acell{
+    display:none;
+  }
+  #grid{
+    max-height:none;
   }
 
-  .url-input{
-    width:100%;
-  }
+  /* Cards & inputs */
+  .card{padding:12px}
+  .url-input{width:100%}
+  .depth-btns{flex-wrap:wrap}
 
-  .depth-btns{
-    flex-wrap:wrap;
-  }
+  /* Row wrap for button groups */
+  .row{flex-direction:column;align-items:stretch}
+  .exec-btn{width:100%;justify-content:center}
 
+  /* Module tabs smaller text */
+  .mtab{font-size:10px;padding:6px 2px}
+
+  /* Schema output height cap */
+  .schema-code{max-height:200px}
+
+  /* AI layout fix */
+  .ai-ring-card{padding:14px}
+
+  /* Inspector back button */
+  .back-btn{font-size:11px}
 }
 
 /* ── MODE TOGGLE ── */
@@ -269,6 +376,8 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
 .stag{font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono);font-weight:700;margin-left:4px;vertical-align:middle}
 .stag.proxy-ok{background:var(--green-dim);color:var(--green)}
 .stag.proxy-fail{background:var(--amber-dim);color:var(--amber)}
+/* ── SECTION TITLE ── */
+.sec-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 </style>
   <script type="application/ld+json">
 {
@@ -283,6 +392,10 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
 </script>
 </head>
 <body>
+
+<!-- MOBILE MENU TOGGLE -->
+<button id="menuToggle" aria-label="Open navigation menu" onclick="toggleSidebar()">☰</button>
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <!-- STATUS BAR -->
 <div id="statusbar">
@@ -425,6 +538,7 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
       <button class="back-btn" id="backBtn">← Back to Crawler</button>
       <div class="ph" id="ddTitle" style="font-size:16px;margin-top:2px">Page Inspector</div>
       <div class="ps" id="ddUrl" style="color:var(--green);word-break:break-all"></div>
+      <div id="ddMeta" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;font-size:11px;font-family:var(--mono);color:var(--text3)"></div>
     </div>
 
     <div class="mod-tabs" id="modTabs">
@@ -588,7 +702,13 @@ $$('.nav-item[data-panel]').forEach(n=>n.addEventListener('click',()=>showPanel(
 $('backBtn').addEventListener('click',()=>showPanel('crawler'));
 $('navExport').addEventListener('click', exportReport);
 $('exportBtn').addEventListener('click', exportReport);
-$('navInspector').addEventListener('click',()=>{ if(pages.length) showPanel('inspector'); });
+$('navInspector').addEventListener('click',()=>{
+  if(pages.length){
+    showPanel('inspector');
+  } else {
+    showToast('⚠ Run an audit first — no pages to inspect yet.');
+  }
+});
 
 // depth selector
 $$('.dbtn').forEach(b=>b.addEventListener('click',()=>{
@@ -1126,7 +1246,7 @@ function exportReport(){
   const titles=pages.map(p=>p.title).filter(Boolean);
   const dup=titles.length-new Set(titles).size;
   const sc=pages.filter(p=>p.status===200).map(p=>p.score);
-  const avg=sc.length?Math.round(sc.reduce((a,b)=>a+b)/sc.length):0;
+  const avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):0;
   const rows=pages.map(p=>`<tr>
     <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url}</td>
     <td style="text-align:center;color:${p.status===200?'#10B981':'#EF4444'}">${p.status}</td>
@@ -1252,6 +1372,32 @@ function showToast(msg){
 // bind paste panel nav
 const navPaste=$('navPaste');
 if(navPaste) navPaste.addEventListener('click',()=>showPanel('paste'));
+
+// ═══════════════════════════
+// MOBILE SIDEBAR TOGGLE
+// ═══════════════════════════
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  const btn=document.getElementById('menuToggle');
+  const isOpen=sb.classList.toggle('open');
+  ov.classList.toggle('open',isOpen);
+  btn.textContent=isOpen?'✕':'☰';
+}
+function closeSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  const btn=document.getElementById('menuToggle');
+  sb.classList.remove('open');
+  ov.classList.remove('open');
+  btn.textContent='☰';
+}
+// Close sidebar on nav-item click (mobile)
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    if(window.innerWidth<=768) closeSidebar();
+  });
+});
 
 buildSchemaFields();
 syncSerp();
