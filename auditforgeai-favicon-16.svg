@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>AuditForge AI Favicon 16px</title>
+  <rect x="0" y="0" width="16" height="16" rx="3" fill="#0D1117"/>
+  <path d="M8,1 L14,3.5 L14,9 Q14,13 8,14.5 Q2,13 2,9 L2,3.5 Z"
+        fill="#080C0F" stroke="#10B981" stroke-width="0.8"/>
+  <line x1="4" y1="8.5" x2="12" y2="8.5" stroke="#10B981" stroke-width="1.2" opacity="0.9"/>
+  <text x="8" y="9"
+        font-family="'Syne','Arial Black',sans-serif"
+        font-weight="800" font-size="7"
+        fill="#10B981" text-anchor="middle">AF</text>
+</svg>
