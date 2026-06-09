@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>AuditForge AI Logo</title>
+  <desc>512x512 logo for AuditForge AI</desc>
+
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0D1117"/>
+      <stop offset="100%" stop-color="#080C0F"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#111C26"/>
+      <stop offset="100%" stop-color="#080C0F"/>
+    </linearGradient>
+    <clipPath id="logoClip">
+      <rect x="0" y="0" width="512" height="512" rx="80"/>
+    </clipPath>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="512" height="512" rx="80" fill="url(#bgGrad)" stroke="#1E2D3D" stroke-width="2.5"/>
+
+  <!-- grid texture -->
+  <g clip-path="url(#logoClip)" opacity="0.07">
+    <line x1="0"   y1="64"  x2="512" y2="64"  stroke="#10B981" stroke-width="1"/>
+    <line x1="0"   y1="128" x2="512" y2="128" stroke="#10B981" stroke-width="1"/>
+    <line x1="0"   y1="192" x2="512" y2="192" stroke="#10B981" stroke-width="1"/>
+    <line x1="0"   y1="256" x2="512" y2="256" stroke="#10B981" stroke-width="1"/>
+    <line x1="0"   y1="320" x2="512" y2="320" stroke="#10B981" stroke-width="1"/>
+    <line x1="0"   y1="384" x2="512" y2="384" stroke="#10B981" stroke-width="1"/>
+    <line x1="0"   y1="448" x2="512" y2="448" stroke="#10B981" stroke-width="1"/>
+    <line x1="64"  y1="0"   x2="64"  y2="512" stroke="#10B981" stroke-width="1"/>
+    <line x1="128" y1="0"   x2="128" y2="512" stroke="#10B981" stroke-width="1"/>
+    <line x1="192" y1="0"   x2="192" y2="512" stroke="#10B981" stroke-width="1"/>
+    <line x1="256" y1="0"   x2="256" y2="512" stroke="#10B981" stroke-width="1"/>
+    <line x1="320" y1="0"   x2="320" y2="512" stroke="#10B981" stroke-width="1"/>
+    <line x1="384" y1="0"   x2="384" y2="512" stroke="#10B981" stroke-width="1"/>
+    <line x1="448" y1="0"   x2="448" y2="512" stroke="#10B981" stroke-width="1"/>
+  </g>
+
+  <!-- corner brackets -->
+  <polyline points="24,56 24,24 56,24"   fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+  <polyline points="456,24 488,24 488,56" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+  <polyline points="24,456 24,488 56,488" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+  <polyline points="456,488 488,488 488,456" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- orbit ring -->
+  <circle cx="256" cy="210" r="148" fill="none" stroke="#1E2D3D" stroke-width="1.2" stroke-dasharray="5 8"/>
+  <!-- orbit dots -->
+  <circle cx="256" cy="62"  r="6" fill="#10B981" opacity="0.9"/>
+  <circle cx="404" cy="210" r="5" fill="#10B981" opacity="0.5"/>
+  <circle cx="108" cy="210" r="5" fill="#10B981" opacity="0.5"/>
+  <circle cx="256" cy="358" r="4" fill="#10B981" opacity="0.3"/>
+
+  <!-- shield shadow -->
+  <path d="M256,88 L356,126 L356,222 Q356,296 256,322 Q156,296 156,222 L156,126 Z" fill="#04070A" opacity="0.7"/>
+
+  <!-- shield outer -->
+  <path d="M256,92 L352,129 L352,222 Q352,292 256,317 Q160,292 160,222 L160,129 Z"
+        fill="url(#shieldGrad)" stroke="#10B981" stroke-width="3"/>
+
+  <!-- shield inner bevel -->
+  <path d="M256,108 L336,141 L336,222 Q336,278 256,300 Q176,278 176,222 L176,141 Z"
+        fill="none" stroke="#1E2D3D" stroke-width="1.5"/>
+
+  <!-- AF monogram -->
+  <text x="256" y="232"
+        font-family="'Syne', 'Arial Black', sans-serif"
+        font-weight="800" font-size="108"
+        fill="#10B981" text-anchor="middle" letter-spacing="-4">AF</text>
+
+  <!-- scan lines -->
+  <line x1="182" y1="248" x2="330" y2="248" stroke="#10B981" stroke-width="2.5" opacity="0.8"/>
+  <line x1="178" y1="264" x2="334" y2="264" stroke="#10B981" stroke-width="2"   opacity="0.45"/>
+  <line x1="182" y1="280" x2="330" y2="280" stroke="#10B981" stroke-width="1.5" opacity="0.22"/>
+
+  <!-- AI badge on shield -->
+  <rect x="228" y="302" width="56" height="20" rx="4" fill="#0D4F35" stroke="#10B981" stroke-width="1.2"/>
+  <text x="256" y="316"
+        font-family="'JetBrains Mono', 'Courier New', monospace"
+        font-weight="700" font-size="11"
+        fill="#10B981" text-anchor="middle" letter-spacing="3">AI</text>
+
+  <!-- wordmark -->
+  <text x="256" y="382"
+        font-family="'Syne', 'Arial Black', sans-serif"
+        font-weight="800" font-size="44"
+        fill="#E2E8F0" text-anchor="middle" letter-spacing="-1.5">AuditForge</text>
+  <text x="256" y="424"
+        font-family="'Syne', 'Arial Black', sans-serif"
+        font-weight="800" font-size="44"
+        fill="#10B981" text-anchor="middle" letter-spacing="-1.5">AI</text>
+
+  <!-- tagline -->
+  <text x="256" y="454"
+        font-family="'JetBrains Mono', 'Courier New', monospace"
+        font-size="12" fill="#4A5568" text-anchor="middle" letter-spacing="3">// SEO · AI VISIBILITY</text>
+
+  <!-- status strip -->
+  <rect x="0" y="466" width="512" height="46" rx="0" fill="#0B0F14"/>
+  <rect x="0" y="466" width="512" height="1"  fill="#1E2D3D"/>
+  <circle cx="26" cy="489" r="5" fill="#10B981" opacity="0.9"/>
+  <text x="40" y="493"
+        font-family="'JetBrains Mono', 'Courier New', monospace"
+        font-size="11" fill="#4A5568" letter-spacing="1.5">AUDIT ENGINE v2 — READY</text>
+</svg>
