@@ -23,55 +23,7 @@
 <meta name="twitter:description" content="Free SEO & AI Visibility Auditor">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#080C0F;--bg2:#0D1117;--border:#1E2D3D;--green:#10B981;--green-dim:#0D4F35;--text:#E2E8F0;--text2:#94A3B8;--text3:#4A5568;--mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif}
-html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
-a{color:inherit;text-decoration:none}
-header{position:sticky;top:0;z-index:50;background:rgba(13,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-.nav{max-width:1100px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
-.brand{font-weight:800;letter-spacing:-.02em;font-size:18px}
-.brand span{color:var(--green)}
-.nav ul{display:flex;gap:6px;list-style:none}
-.nav a.link{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text2);padding:8px 12px;border-radius:4px}
-.nav a.link:hover{color:var(--text);background:rgba(255,255,255,.04)}
-.nav a.link.active{color:var(--green)}
-.cta{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--green);border:1px solid var(--green);background:rgba(16,185,129,.08);padding:8px 14px;border-radius:4px}
-main{max-width:880px;margin:0 auto;padding:80px 24px 60px}
-.kicker{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--green);margin-bottom:14px}
-h1{font-size:clamp(36px,5vw,60px);font-weight:800;line-height:1.05;letter-spacing:-.02em}
-h1 em{font-style:normal;color:var(--green)}
-.lead{margin-top:18px;font-size:18px;color:var(--text2);max-width:640px;line-height:1.55}
-.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:50px}
-.card{background:var(--bg2);border:1px solid var(--border);padding:22px;border-radius:6px}
-.card h3{font-size:16px;color:var(--green);margin-bottom:8px;font-family:var(--mono);letter-spacing:.05em}
-.card p{color:var(--text2);font-size:14px;line-height:1.6}
-footer{border-top:1px solid var(--border);background:var(--bg2);padding:18px 24px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:80px}
-footer .heart{color:var(--green)}
-  @media (max-width:768px){
-
-  .nav{
-    flex-direction:column;
-    gap:12px;
-    text-align:center;
-  }
-
-  .nav ul{
-    flex-wrap:wrap;
-    justify-content:center;
-  }
-
-  .cta{
-    width:100%;
-    text-align:center;
-  }
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
   <script type="application/ld+json">
 {
   "@context":"https://schema.org",
@@ -107,7 +59,10 @@ footer .heart{color:var(--green)}
     <div class="card"><h3>Built in the open</h3><p>Built as an independent project focused on making website auditing accessible, transparent, and free for everyone.Use it as much as you want.</p></div>
   </div>
 </main>
-<footer>© <span id="y"></span> AuditForge AI — Made with <span class="heart">♥</span> from Sourav Bagchi</footer>
-<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+<footer>
+  © <span id="y"></span> AuditForge AI — Made with
+  <span class="heart">♥</span> from Sourav Bagchi
+</footer>
+<script src="js/script.js"></script>
 </body>
 </html>
