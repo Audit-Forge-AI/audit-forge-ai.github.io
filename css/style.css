@@ -376,4 +376,51 @@ footer .heart {
     .lead {
         font-size: 16px;
     }
+   /* CONTACT PAGE */
+
+.row{
+    display:grid;
+    gap:18px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    margin-top:50px;
+}
+
+.label{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.18em;
+    color:var(--text3);
+    text-transform:uppercase;
+}
+
+.value{
+    margin-top:8px;
+    font-family:var(--mono);
+    font-size:15px;
+    color:var(--green);
+    word-break:break-all;
+}
+
+.value a:hover{
+    text-decoration:underline;
+}
+
+.note{
+    margin-top:50px;
+    padding:22px;
+    border:1px dashed var(--green-dim);
+    border-radius:6px;
+    color:var(--text2);
+    font-size:14px;
+}
+
+.note b{
+    color:var(--green);
+}
+
+@media (max-width:768px){
+    .row{
+        grid-template-columns:1fr;
+    }
+}
 }
