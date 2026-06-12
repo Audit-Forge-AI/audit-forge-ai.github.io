@@ -729,13 +729,10 @@ $$('.mtab').forEach(t=>t.addEventListener('click',()=>{
   const p=$('mod-'+t.dataset.mod); if(p) p.classList.add('active');
 }));
 
-// ═══════════════════════════
-// PROXY FETCH — multi-proxy fallback + smart status detection
-// ═══════════════════════════
+// PROXY FETCH
 const PROXIES = [
-  url => 'https://api.allorigins.win/get?url=' + encodeURIComponent(url),
-  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-  url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+  url => 'https://gentle-sunset-d772.kamayegabharat.workers.dev/?url=' + encodeURIComponent(url),
+  url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
 ];
 
 // Track which proxy is currently healthy
