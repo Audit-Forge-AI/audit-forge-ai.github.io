@@ -1,0 +1,26 @@
+{
+  "name": "AuditForge AI",
+  "short_name": "AuditForge",
+  "description": "Free SEO and AI visibility auditing tool that analyzes websites and provides actionable recommendations.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#070B10",
+  "theme_color": "#22C55E",
+  "orientation": "portrait",
+  "lang": "en",
+  "categories": [
+    "developer",
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
