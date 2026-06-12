@@ -1,1407 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AuditForge AI Pro – Free SEO & AI Visibility Auditor</title>
-  <meta name="description" content="Free SEO, AI Visibility and Website Audit Tool. Analyze metadata, headings, accessibility, structured data and AI readiness.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuditForge AI Pro – Free SEO & AI Visibility Auditor</title>
+    <meta name="description" content="Free SEO, AI Visibility and Website Audit Tool. Analyze metadata, headings, accessibility, structured data and AI readiness.">
 
-<link rel="canonical" href="https://audit-forge-ai.github.io/services.html">
-<link rel="icon" type="image/svg+xml" sizes="32x32" href="/favicon/auditforgeai-favicon-32.svg">
-<link rel="icon" type="image/svg+xml" sizes="16x16" href="/favicon/auditforgeai-favicon-16.svg">
-<link rel="apple-touch-icon" type="image/svg+xml"   href="/favicon/auditforgeai-logo-512.svg">
-<meta property="og:image" content="https://audit-forge-ai.github.io/favicon/auditforgeai-logo-512.svg">
-<meta name="twitter:image" content="https://audit-forge-ai.github.io/favicon/auditforgeai-logo-512.svg">
-<meta property="og:type" content="website">
-<meta property="og:title" content="AuditForge AI Pro">
-<meta property="og:description" content="Free SEO, AI Visibility and Website Audit Tool.">
-<meta property="og:url" content="https://audit-forge-ai.github.io/services.html">
+    <link rel="canonical" href="https://audit-forge-ai.github.io/services.html">
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/favicon/auditforgeai-favicon-32.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/favicon/auditforgeai-favicon-16.svg">
+    <link rel="apple-touch-icon" type="image/svg+xml" href="/favicon/auditforgeai-logo-512.svg">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AuditForge AI Pro">
+    <meta property="og:description" content="Free SEO, AI Visibility and Website Audit Tool.">
+    <meta property="og:image" content="https://audit-forge-ai.github.io/favicon/auditforgeai-logo-512.svg">
 
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AuditForge AI Pro">
-<meta name="twitter:description" content="Free SEO, AI Visibility and Website Audit Tool.">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#080C0F;--bg2:#0D1117;--bg3:#111820;--bg4:#161E28;
-  --border:#1E2D3D;--border2:#243040;
-  --green:#10B981;--green2:#059669;--green-dim:rgba(16,185,129,.12);
-  --red:#EF4444;--red-dim:rgba(239,68,68,.12);
-  --amber:#F59E0B;--amber-dim:rgba(245,158,11,.12);
-  --blue:#3B82F6;
-  --text:#E2E8F0;--text2:#94A3B8;--text3:#4A5568;
-  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
-}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
-/* Mobile base override */
-@media(max-width:768px){html,body{height:auto;overflow:auto}}
-button{cursor:pointer;font-family:var(--sans);border:none}
-input,select,textarea{font-family:var(--mono);outline:none}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes rowIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/services.css">
 
-/* ── STATUS BAR ── */
-#statusbar{height:32px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:var(--mono);font-size:11px;color:var(--text2);flex-shrink:0;z-index:50}
-.ping-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
-.enterprise-badge{background:linear-gradient(90deg,rgba(16,185,129,.15),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.3);color:var(--green);padding:2px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em}
-
-/* ── LAYOUT ── */
-#app{display:flex;height:calc(100vh - 32px);overflow:hidden}
-
-/* ── SIDEBAR ── */
-#sidebar{width:216px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
-.logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
-.logo-name{font-size:17px;font-weight:800;color:var(--green);letter-spacing:-.02em}
-.logo-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px;letter-spacing:.05em}
-nav{flex:1;padding:8px 0;overflow-y:auto}
-.nav-sec{padding:8px 16px 3px;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)}
-.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;border-left:2px solid transparent}
-.nav-item:hover{color:var(--text);background:rgba(255,255,255,.025)}
-.nav-item.active{color:var(--green);background:var(--green-dim);border-left-color:var(--green)}
-.nav-item .ico{width:15px;text-align:center;font-size:13px}
-.nbadge{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:10px;font-family:var(--mono);font-weight:700}
-.nbadge.g{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.25)}
-.nbadge.r{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.25)}
-.sidebar-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);font-family:var(--mono);line-height:1.6}
-
-/* ── MAIN ── */
-#main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.panel{display:none;flex:1;flex-direction:column;overflow-y:auto;padding:22px 24px;gap:16px}
-.panel.active{display:flex;animation:fadeIn .15s ease}
-.ph{font-size:21px;font-weight:800;letter-spacing:-.03em}
-.ps{font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:3px}
-
-/* ── CARDS / INPUTS ── */
-.card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:18px}
-.label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:7px}
-.url-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--text);transition:border-color .15s}
-.url-input:focus{border-color:var(--green)}
-.url-input::placeholder{color:var(--text3)}
-.row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-top:14px}
-.depth-btns{display:flex;gap:5px}
-.dbtn{padding:6px 14px;border:1px solid var(--border2);background:var(--bg);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:12px;transition:all .12s}
-.dbtn:hover{color:var(--text)}
-.dbtn.active{border-color:var(--green);background:var(--green-dim);color:var(--green)}
-.exec-btn{padding:11px 26px;background:var(--green);border-radius:6px;color:#000;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;transition:all .12s;flex-shrink:0}
-.exec-btn:hover{background:var(--green2);transform:translateY(-1px)}
-.exec-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.spinner{width:13px;height:13px;border:2px solid rgba(0,0,0,.25);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
-.exec-btn.loading .spinner{display:block}
-
-/* ── PROGRESS ── */
-.prog-wrap{display:none;margin-top:12px}
-.prog-wrap.show{display:block}
-.prog-info{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:5px}
-.prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-.prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s ease;width:0}
-
-/* ── ERROR BANNER ── */
-.err-banner{display:none;margin-top:8px;padding:8px 12px;background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:5px;font-family:var(--mono);font-size:11px;color:var(--red)}
-
-/* ── GRID ── */
-.grid-head{display:grid;grid-template-columns:1fr 110px 90px 72px;padding:7px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px 6px 0 0;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
-#grid{border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;max-height:380px;overflow-y:auto}
-.grid-row{display:grid;grid-template-columns:1fr 110px 90px 72px;padding:9px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px;align-items:center;cursor:default;transition:background .1s;animation:rowIn .25s ease}
-.grid-row:last-child{border-bottom:none}
-.grid-row:hover{background:rgba(255,255,255,.02)}
-.ucell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);padding-right:8px}
-.scell{text-align:center}
-.s200{color:var(--green)}.s404{color:var(--red)}.soth{color:var(--amber)}
-.qcell{text-align:center}
-.qhi{color:var(--green)}.qmi{color:var(--amber)}.qlo{color:var(--red)}
-.acell{text-align:right}
-.drill{padding:3px 9px;border:1px solid var(--border2);background:transparent;border-radius:3px;color:var(--text2);font-family:var(--mono);font-size:11px;transition:all .12s}
-.drill:hover{border-color:var(--green);color:var(--green)}
-.grid-empty{padding:36px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px}
-
-/* ── SUMMARY CARDS ── */
-.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-.sum-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px}
-.sc-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:7px}
-.sc-val{font-size:26px;font-weight:800;font-family:var(--mono)}
-.sc-val.g{color:var(--green)}.sc-val.r{color:var(--red)}.sc-val.a{color:var(--amber)}
-.sc-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px}
-.export-btn{align-self:flex-start;padding:9px 20px;border:1px solid var(--border2);background:var(--bg3);border-radius:6px;color:var(--text2);font-size:12px;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:7px}
-.export-btn:hover{border-color:var(--green);color:var(--green)}
-
-/* ── INSPECTOR ── */
-.back-btn{display:flex;align-items:center;gap:6px;background:none;color:var(--text2);font-size:12px;font-family:var(--mono);padding:0;transition:color .12s;margin-bottom:4px}
-.back-btn:hover{color:var(--green)}
-.mod-tabs{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:3px}
-.mtab{flex:1;padding:7px 4px;background:transparent;border-radius:4px;color:var(--text2);font-size:11px;font-weight:700;font-family:var(--mono);letter-spacing:.03em;transition:all .12s;text-align:center}
-.mtab:hover{color:var(--text)}
-.mtab.active{background:var(--bg4);color:var(--green)}
-.mpane{display:none}.mpane.active{display:block;animation:fadeIn .15s}
-
-/* ── META MODULE ── */
-.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.mfield{background:var(--bg);border:1px solid var(--border2);border-radius:6px;overflow:hidden}
-.mfield-hd{padding:7px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);display:flex;justify-content:space-between;align-items:center}
-.mfield textarea{width:100%;background:transparent;border:none;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12px;resize:none;outline:none;line-height:1.5}
-.pxbar{height:3px;transition:background .3s}
-.pxbar.ok{background:var(--green)}.pxbar.warn{background:var(--amber)}.pxbar.bad{background:var(--red)}
-.cc{font-size:10px;font-family:var(--mono)}.cc.ok{color:var(--green)}.cc.warn{color:var(--amber)}.cc.bad{color:var(--red)}
-
-.serp-box{background:var(--bg);border:1px solid var(--border2);border-radius:6px;overflow:hidden}
-.serp-toggle{display:flex;gap:4px;padding:7px 10px;background:var(--bg2);border-bottom:1px solid var(--border)}
-.stbtn{padding:3px 11px;border:1px solid transparent;background:transparent;border-radius:3px;color:var(--text2);font-family:var(--mono);font-size:11px;transition:all .12s}
-.stbtn.active{border-color:var(--border2);background:var(--bg3);color:var(--text)}
-.serp-preview{padding:14px;background:#fff;min-height:100px}
-.serp-site{font-size:12px;color:#4d5156;margin-bottom:2px;font-family:Arial,sans-serif}
-.serp-title{color:#1a0dab;font-size:18px;font-weight:400;margin-bottom:3px;font-family:Arial,sans-serif;line-height:1.3;cursor:pointer}
-.serp-title:hover{text-decoration:underline}
-.serp-desc{color:#4d5156;font-size:13px;line-height:1.5;font-family:Arial,sans-serif}
-.serp-preview.mobile .serp-title{font-size:15px}
-.serp-preview.mobile .serp-desc{font-size:12px}
-.px-info{display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:8px}
-
-/* ── HEADING MODULE ── */
-.htree{font-family:var(--mono);font-size:12px;padding:10px}
-.hnode{display:flex;align-items:flex-start;gap:8px;padding:5px 0}
-.htag{font-size:9px;font-weight:700;letter-spacing:.05em;padding:2px 6px;border-radius:3px;flex-shrink:0;margin-top:1px}
-.htag.h1{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.2)}
-.htag.h2{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
-.htag.h3{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
-.htag.h4{background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.2)}
-.htext{color:var(--text);flex:1}
-.herr{color:var(--red);font-size:10px;flex-shrink:0}
-.ind1{margin-left:0}.ind2{margin-left:16px}.ind3{margin-left:32px}.ind4{margin-left:48px}
-.violations{margin-top:10px;background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:10px 12px}
-.vitem{color:var(--red);font-family:var(--mono);font-size:11px;margin-bottom:5px}
-.vitem:last-child{margin-bottom:0}
-.ok-banner{background:var(--green-dim);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:9px 13px;font-family:var(--mono);font-size:11px;color:var(--green);margin-top:10px}
-
-/* ── SCHEMA MODULE ── */
-.schema-layout{display:grid;grid-template-columns:260px 1fr;gap:14px}
-.schema-sel{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12px;appearance:none;margin-bottom:10px}
-.sfield{margin-bottom:8px}
-.sfield label{display:block;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;font-family:var(--mono);margin-bottom:4px}
-.sfield input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:4px;padding:7px 10px;color:var(--text);font-size:12px;transition:border-color .12s}
-.sfield input:focus{border-color:var(--green)}
-.schema-out{background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
-.schema-out-hd{padding:7px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--text3)}
-.copy-btn{padding:3px 11px;border:1px solid var(--border2);background:transparent;border-radius:3px;color:var(--text2);font-family:var(--mono);font-size:11px;transition:all .12s}
-.copy-btn:hover{border-color:var(--green);color:var(--green)}
-.schema-code{padding:12px;overflow:auto;font-family:var(--mono);font-size:11px;color:var(--green);line-height:1.6;white-space:pre;max-height:320px}
-
-/* ── AI RADAR MODULE ── */
-.ai-layout{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start}
-.ai-ring-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center}
-.ai-ring{position:relative;width:100px;height:100px;margin:0 auto 10px}
-.ai-ring svg{transform:rotate(-90deg)}
-#radarArc{transition:stroke-dashoffset 1.1s ease-out}
-.ai-score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;font-family:var(--mono)}
-.ai-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
-.ai-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
-.ai-metrics{display:flex;flex-direction:column;gap:9px}
-.ametric{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:11px}
-.ametric-hd{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:7px}
-.abar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-.afill{height:100%;border-radius:2px;transition:width 1s ease-out}
-.afill.hi{background:var(--green)}.afill.mi{background:var(--amber)}.afill.lo{background:var(--red)}
-
-/* ── MOBILE HAMBURGER BUTTON ── */
-#menuToggle{
-  display:none;
-  position:fixed;
-  top:40px;
-  left:12px;
-  z-index:200;
-  width:38px;height:38px;
-  background:var(--bg3);
-  border:1px solid var(--border2);
-  border-radius:7px;
-  align-items:center;justify-content:center;
-  cursor:pointer;
-  font-size:18px;
-  color:var(--text2);
-  transition:all .15s;
-  line-height:1;
-  padding:0;
-}
-#menuToggle:hover{border-color:var(--green);color:var(--green)}
-
-/* Overlay behind open sidebar on mobile */
-#sidebarOverlay{
-  display:none;
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.6);
-  z-index:150;
-}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  html,body{
-    height:auto;
-    overflow:auto;
-    overflow-x:hidden;
-  }
-
-  /* Show hamburger button */
-  #menuToggle{
-    display:flex;
-  }
-
-  /* Sidebar slides in as a drawer */
-  #sidebar{
-    position:fixed;
-    top:0;left:0;bottom:0;
-    width:240px;
-    z-index:160;
-    transform:translateX(-100%);
-    transition:transform .25s ease;
-    display:flex !important;
-  }
-  #sidebar.open{
-    transform:translateX(0);
-  }
-
-  /* Show overlay when sidebar is open */
-  #sidebarOverlay.open{
-    display:block;
-  }
-
-  #app{
-    display:block;
-    height:auto;
-    min-height:100vh;
-    overflow:visible;
-  }
-
-  #main{
-    width:100%;
-    height:auto;
-    overflow:visible;
-    overflow-x:hidden;
-  }
-
-  /* Panels scroll naturally */
-  .panel{
-    overflow-y:visible;
-    max-height:none;
-    padding:16px 14px;
-    padding-top:52px; /* space for hamburger button */
-  }
-  .panel.active{
-    display:flex;
-  }
-
-  /* Status bar smaller on mobile */
-  #statusbar{
-    font-size:9px;
-    padding:0 10px 0 56px; /* left padding for hamburger */
-    overflow:hidden;
-  }
-  .enterprise-badge{
-    font-size:8px;
-    padding:2px 6px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    max-width:160px;
-  }
-
-  /* Two-column grids collapse */
-  .meta-grid,
-  .schema-layout,
-  .ai-layout{
-    grid-template-columns:1fr !important;
-  }
-
-  .sum-grid{
-    grid-template-columns:repeat(2,1fr);
-    gap:8px;
-  }
-
-  /* Data grid: hide action column, shrink others */
-  .grid-head{
-    grid-template-columns:1fr 64px 64px 0 !important;
-    font-size:9px;
-  }
-  .grid-row{
-    grid-template-columns:1fr 64px 64px 0 !important;
-    font-size:10px;
-  }
-  .grid-head > div:last-child,
-  .grid-row > .acell{
-    display:none;
-  }
-  #grid{
-    max-height:none;
-  }
-
-  /* Cards & inputs */
-  .card{padding:12px}
-  .url-input{width:100%}
-  .depth-btns{flex-wrap:wrap}
-
-  /* Row wrap for button groups */
-  .row{flex-direction:column;align-items:stretch}
-  .exec-btn{width:100%;justify-content:center}
-
-  /* Module tabs smaller text */
-  .mtab{font-size:10px;padding:6px 2px}
-
-  /* Schema output height cap */
-  .schema-code{max-height:200px}
-
-  /* AI layout fix */
-  .ai-ring-card{padding:14px}
-
-  /* Inspector back button */
-  .back-btn{font-size:11px}
-}
-
-/* ── MODE TOGGLE ── */
-.mode-bar{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:3px;margin-bottom:14px}
-.mmode{flex:1;padding:8px 10px;background:transparent;border-radius:5px;color:var(--text2);font-size:12px;font-weight:700;font-family:var(--mono);transition:all .12s;text-align:center;letter-spacing:.03em}
-.mmode:hover{color:var(--text)}
-.mmode.active{background:var(--bg4);color:var(--green);box-shadow:0 1px 4px rgba(0,0,0,.4)}
-/* ── PASTE PANEL ── */
-.paste-area{width:100%;min-height:180px;max-height:280px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:12px;color:var(--text);font-family:var(--mono);font-size:11px;line-height:1.6;resize:vertical;transition:border-color .15s}
-.paste-area:focus{border-color:var(--green)}
-.paste-area::placeholder{color:var(--text3)}
-.paste-url-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;color:var(--text);font-size:12px;margin-top:8px;transition:border-color .15s}
-.paste-url-input:focus{border-color:var(--green)}
-.paste-url-input::placeholder{color:var(--text3)}
-/* ── PROXY STATUS ── */
-.proxy-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:10px;margin-left:8px;transition:all .3s}
-.proxy-pill.ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.25)}
-.proxy-pill.fail{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.25)}
-.proxy-pill.busy{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
-.proxy-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-/* ── STATUS TAG ON GRID ROWS ── */
-.stag{font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono);font-weight:700;margin-left:4px;vertical-align:middle}
-.stag.proxy-ok{background:var(--green-dim);color:var(--green)}
-.stag.proxy-fail{background:var(--amber-dim);color:var(--amber)}
-/* ── SECTION TITLE ── */
-.sec-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-</style>
-  <script type="application/ld+json">
-{
-  "@context":"https://schema.org",
-  "@type":"WebApplication",
-  "name":"AuditForge AI Pro",
-  "applicationCategory":"SEOApplication",
-  "operatingSystem":"Web",
-  "description":"Free SEO and AI Visibility Auditor",
-  "url":"https://audit-forge-ai.github.io/services.html"
-}
-</script>
+    <script type="application/ld+json">
+    {
+      "@context":"https://schema.org",
+      "@type":"WebApplication",
+      "name":"AuditForge AI Pro",
+      "applicationCategory":"SEOApplication",
+      "operatingSystem":"Web",
+      "description":"Free SEO and AI Visibility Auditor",
+      "url":"https://audit-forge-ai.github.io/services.html"
+    }
+    </script>
 </head>
 <body>
 
-<!-- MOBILE MENU TOGGLE -->
-<button id="menuToggle" aria-label="Open navigation menu" onclick="toggleSidebar()">☰</button>
-<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <!-- MOBILE MENU TOGGLE -->
+    <button id="menuToggle" aria-label="Open navigation menu" onclick="toggleSidebar()">☰</button>
+    <div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- STATUS BAR -->
-<div id="statusbar">
-  <div style="display:flex;align-items:center;gap:4px">
-    <span class="ping-dot"></span>
-    <span>PING <span id="pingVal">14ms</span></span>
-    <span style="margin:0 10px;color:var(--border2)">|</span>
-    <span>PROXY: allorigins.win</span>
-  </div>
-  <div class="enterprise-badge">Enterprise Core — 100% Free Open-Source Workspace</div>
-  <div id="clock" style="font-family:var(--mono)"></div>
-</div>
-
-<div id="app">
-<!-- SIDEBAR -->
-<div id="sidebar">
-  <div class="logo">
-    <div class="logo-name">AuditForge</div>
-    <div class="logo-sub">AI Pro // v3.2.0</div>
-  </div>
-  <nav>
-    <div class="nav-sec">Core</div>
-    <div class="nav-item active" data-panel="crawler">
-      <span class="ico">⬡</span> Crawler Console
-    </div>
-    <div class="nav-sec">Analysis</div>
-    <div class="nav-item" data-panel="inspector" id="navInspector">
-      <span class="ico">◈</span> Page Inspector
-      <span class="nbadge g" id="pageBadge" style="display:none">0</span>
-    </div>
-    <div class="nav-sec">Tools</div>
-    <div class="nav-item" data-panel="paste" id="navPaste">
-      <span class="ico">⌗</span> Paste HTML Audit
-    </div>
-    <div class="nav-sec">Reports</div>
-    <div class="nav-item" id="navExport">
-      <span class="ico">↓</span> Export Report
-    </div>
-  </nav>
-  <div class="sidebar-foot">
-    Engine: BFS // max 2 streams<br>
-    CORS: allorigins.win proxy
-  </div>
-</div>
-
-<!-- MAIN -->
-<div id="main">
-
-  <!-- ══ CRAWLER PANEL ══ -->
-  <div class="panel active" id="panel-crawler">
-    <div>
-      <div class="ph">Crawler Console</div>
-      <div class="ps">BFS recursive engine // concurrency: 2 streams // 500ms rate-limit</div>
-    </div>
-
-    <div class="card">
-      <!-- MODE TOGGLE -->
-      <div class="mode-bar">
-        <button class="mmode active" id="modeCrawl" onclick="setMode('crawl')">⬡ URL Crawler</button>
-        <button class="mmode" id="modePaste" onclick="setMode('paste')">⌗ Paste HTML <span style="font-size:9px;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:700">RELIABLE</span></button>
-      </div>
-
-      <!-- CRAWL MODE -->
-      <div id="crawlMode">
-        <div class="label">Target Root URL
-          <span class="proxy-pill busy" id="proxyPill"><span class="proxy-dot"></span>checking proxy…</span>
+    <!-- STATUS BAR -->
+    <div id="statusbar">
+        <div style="display:flex;align-items:center;gap:4px">
+            <span class="ping-dot"></span>
+            <span>PING <span id="pingVal">14ms</span></span>
+            <span style="margin:0 10px;color:var(--border2)">|</span>
+            <span>PROXY: allorigins.win</span>
         </div>
-        <input class="url-input" id="urlInput" type="url" placeholder="https://example.com">
-        <div class="err-banner" id="urlErr">⛔ Enter a valid https:// URL to crawl.</div>
-        <div style="margin-top:10px;padding:9px 12px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:5px;font-family:var(--mono);font-size:11px;color:var(--amber);line-height:1.7">
-          ⚠ <strong>Proxy limitation:</strong> Free CORS proxies are often blocked by sites or rate-limited — crawled pages may show "Proxy Err" even when live.<br>
-          <span style="color:var(--text3)">For guaranteed accurate results, switch to <strong style="color:var(--text2)">Paste HTML mode</strong> (toggle above) and paste the page source directly.</span>
-        </div>
-        <div class="row">
-          <div>
-            <div class="label" style="margin-bottom:6px">Max Pages</div>
-            <div class="depth-btns" id="depthBtns">
-              <button class="dbtn active" data-v="10">10</button>
-              <button class="dbtn" data-v="25">25</button>
-              <button class="dbtn" data-v="50">50</button>
-              <button class="dbtn" data-v="100">100</button>
+        <div class="enterprise-badge">Enterprise Core — 100% Free Open-Source Workspace</div>
+        <div id="clock" style="font-family:var(--mono)"></div>
+    </div>
+
+    <div id="app">
+        <!-- SIDEBAR -->
+        <div id="sidebar">
+            <div class="logo">
+                <div class="logo-name">AuditForge</div>
+                <div class="logo-sub">AI Pro // v3.2.0</div>
             </div>
-          </div>
-          <button class="exec-btn" id="execBtn">
-            <div class="spinner" id="spinner"></div>
-            <span id="btnTxt">Execute Deep Audit</span>
-          </button>
-        </div>
-        <div class="prog-wrap" id="progWrap">
-          <div class="prog-info"><span id="progLabel">Initializing…</span><span id="progPct">0%</span></div>
-          <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
-        </div>
-      </div>
-
-      <!-- PASTE MODE -->
-      <div id="pasteMode" style="display:none">
-        <div class="label">Page URL (for display &amp; link resolution)</div>
-        <input class="paste-url-input" id="pasteUrl" type="url" placeholder="https://example.com/page — optional but recommended">
-        <div class="label" style="margin-top:12px">Paste Raw HTML Source</div>
-        <textarea class="paste-area" id="pasteHtml" placeholder="Paste the full HTML source of the page here (Ctrl+U → Ctrl+A → Ctrl+C in browser, or right-click → View Page Source)…"></textarea>
-        <div class="err-banner" id="pasteErr">⛔ Paste some HTML content first.</div>
-        <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-          <button class="exec-btn" id="pasteBtn" onclick="runPasteAudit()">
-            <span>Analyze Pasted HTML</span>
-          </button>
-          <button onclick="clearPaste()" style="padding:9px 16px;border:1px solid var(--border2);background:transparent;border-radius:6px;color:var(--text3);font-size:12px;font-family:var(--mono);transition:all .12s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Clear</button>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="sec-title">Live Crawl Feed</div>
-      <div class="grid-head">
-        <div>Page URL</div>
-        <div style="text-align:center">Status</div>
-        <div style="text-align:center">Score</div>
-        <div style="text-align:right">Action</div>
-      </div>
-      <div id="grid"><div class="grid-empty" id="gridEmpty">No pages crawled yet — enter a URL above and execute the audit.</div></div>
-    </div>
-
-    <div>
-      <div class="sec-title">Sitewide Summary</div>
-      <div class="sum-grid">
-        <div class="sum-card"><div class="sc-label">Total Pages</div><div class="sc-val g" id="stTotal">0</div><div class="sc-sub">pages crawled</div></div>
-        <div class="sum-card"><div class="sc-label">404 Broken</div><div class="sc-val r" id="st404">0</div><div class="sc-sub">dead links</div></div>
-        <div class="sum-card"><div class="sc-label">Missing Alt</div><div class="sc-val a" id="stAlt">0</div><div class="sc-sub">images no alt</div></div>
-        <div class="sum-card"><div class="sc-label">Dup. Titles</div><div class="sc-val a" id="stDup">0</div><div class="sc-sub">duplicate meta titles</div></div>
-        <div class="sum-card"><div class="sc-label">Missing H1</div><div class="sc-val r" id="stNoH1">0</div><div class="sc-sub">pages missing h1</div></div>
-        <div class="sum-card"><div class="sc-label">Avg Score</div><div class="sc-val g" id="stAvg">—</div><div class="sc-sub">diagnostic average</div></div>
-      </div>
-    </div>
-
-    <button class="export-btn" id="exportBtn">↓ Export Technical SEO Report</button>
-  </div>
-
-  <!-- ══ INSPECTOR PANEL ══ -->
-  <div class="panel" id="panel-inspector">
-    <div>
-      <button class="back-btn" id="backBtn">← Back to Crawler</button>
-      <div class="ph" id="ddTitle" style="font-size:16px;margin-top:2px">Page Inspector</div>
-      <div class="ps" id="ddUrl" style="color:var(--green);word-break:break-all"></div>
-      <div id="ddMeta" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;font-size:11px;font-family:var(--mono);color:var(--text3)"></div>
-    </div>
-
-    <div class="mod-tabs" id="modTabs">
-      <button class="mtab active" data-mod="meta">Metadata</button>
-      <button class="mtab" data-mod="headings">Headings</button>
-      <button class="mtab" data-mod="schema">Schema</button>
-      <button class="mtab" data-mod="ai">AI Radar</button>
-    </div>
-
-    <!-- META -->
-    <div class="mpane active" id="mod-meta">
-      <div class="meta-grid">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="mfield">
-            <div class="mfield-hd">Title Tag <span class="cc" id="titleCC">0 ch</span></div>
-            <textarea id="metaTitle" rows="2" oninput="syncSerp()"></textarea>
-            <div class="pxbar ok" id="titleBar"></div>
-          </div>
-          <div class="mfield">
-            <div class="mfield-hd">Meta Description <span class="cc" id="descCC">0 ch</span></div>
-            <textarea id="metaDesc" rows="4" oninput="syncSerp()"></textarea>
-            <div class="pxbar warn" id="descBar"></div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="serp-box">
-            <div class="serp-toggle">
-              <button class="stbtn active" onclick="serpMode('desktop')">Desktop</button>
-              <button class="stbtn" onclick="serpMode('mobile')">Mobile</button>
+            <nav>
+                <div class="nav-sec">Core</div>
+                <div class="nav-item active" data-panel="crawler">
+                    <span class="ico">⬡</span> Crawler Console
+                </div>
+                <div class="nav-item" data-panel="history" id="navHistory">
+                    <span class="ico">📜</span> Audit History
+                </div>
+                <div class="nav-item" data-panel="compare" id="navCompare">
+                    <span class="ico">⚖</span> Comparison
+                </div>
+                <div class="nav-sec">Analysis</div>
+                <div class="nav-item" data-panel="inspector" id="navInspector">
+                    <span class="ico">◈</span> Page Inspector
+                    <span class="nbadge g" id="pageBadge" style="display:none">0</span>
+                </div>
+                <div class="nav-sec">Tools</div>
+                <div class="nav-item" data-panel="paste" id="navPaste">
+                    <span class="ico">⌗</span> Paste HTML Audit
+                </div>
+                <div class="nav-sec">Reports</div>
+                <div class="nav-item" id="navExport">
+                    <span class="ico">↓</span> Export Report
+                </div>
+            </nav>
+            <div class="sidebar-foot">
+                Engine: BFS // max 2 streams<br>
+                CORS: allorigins.win proxy
             </div>
-            <div class="serp-preview" id="serpPreview">
-              <div class="serp-site" id="serpSite">https://example.com</div>
-              <div class="serp-title" id="serpTitle">Page Title Here</div>
-              <div class="serp-desc" id="serpDesc">Meta description will preview here as you type above.</div>
+        </div>
+
+        <!-- MAIN -->
+        <div id="main">
+
+            <!-- ══ CRAWLER PANEL ══ -->
+            <div class="panel active" id="panel-crawler">
+                <div>
+                    <div class="ph">Crawler Console</div>
+                    <div class="ps">BFS recursive engine // concurrency: 2 streams // 500ms rate-limit</div>
+                </div>
+
+                <div class="card">
+                    <!-- MODE TOGGLE -->
+                    <div class="mode-bar">
+                        <button class="mmode active" id="modeCrawl" onclick="setMode('crawl')">⬡ URL Crawler</button>
+                        <button class="mmode" id="modePaste" onclick="setMode('paste')">⌗ Paste HTML <span style="font-size:9px;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:700">RELIABLE</span></button>
+                    </div>
+
+                    <!-- CRAWL MODE -->
+                    <div id="crawlMode">
+                        <div class="label">Target Root URL
+                            <span class="proxy-pill busy" id="proxyPill"><span class="proxy-dot"></span>checking proxy…</span>
+                        </div>
+                        <input class="url-input" id="urlInput" type="url" placeholder="https://example.com">
+                        <div class="err-banner" id="urlErr">⛔ Enter a valid https:// URL to crawl.</div>
+                        
+                        <div class="row">
+                            <div>
+                                <div class="label" style="margin-bottom:6px">Max Pages</div>
+                                <div class="depth-btns" id="depthBtns">
+                                    <button class="dbtn active" data-v="10">10</button>
+                                    <button class="dbtn" data-v="25">25</button>
+                                    <button class="dbtn" data-v="50">50</button>
+                                    <button class="dbtn" data-v="100">100</button>
+                                </div>
+                            </div>
+                            <button class="exec-btn" id="execBtn">
+                                <div class="spinner" id="spinner"></div>
+                                <span id="btnTxt">Execute Deep Audit</span>
+                            </button>
+                        </div>
+
+                        <div class="prog-wrap" id="progWrap">
+                            <div class="prog-info"><span id="progLabel">Initializing…</span><span id="progPct">0%</span></div>
+                            <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+                            <div class="prog-steps">
+                                <div class="prog-step" data-step="robots">Robots.txt</div>
+                                <div class="prog-step" data-step="sitemap">Sitemap</div>
+                                <div class="prog-step" data-step="crawl">BFS Crawl</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PASTE MODE -->
+                    <div id="pasteMode" style="display:none">
+                        <div class="label">Page URL (optional)</div>
+                        <input class="paste-url-input" id="pasteUrl" type="url" placeholder="https://example.com/page">
+                        <div class="label" style="margin-top:12px">Raw HTML Source</div>
+                        <textarea class="paste-area" id="pasteHtml" placeholder="Paste the full HTML source..."></textarea>
+                        <div class="err-banner" id="pasteErr">⛔ Paste some HTML content first.</div>
+                        <div style="margin-top:10px;display:flex;gap:10px">
+                            <button class="exec-btn" onclick="runPasteAudit()">Analyze Pasted HTML</button>
+                            <button onclick="clearPaste()" class="dbtn">Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="sec-title">Live Crawl Feed</div>
+                    <div class="grid-head">
+                        <div>Page URL</div>
+                        <div style="text-align:center">Status</div>
+                        <div style="text-align:center">Score</div>
+                        <div style="text-align:right">Action</div>
+                    </div>
+                    <div id="grid"><div class="grid-empty" id="gridEmpty">No pages crawled yet.</div></div>
+                </div>
+
+                <div class="sum-grid">
+                    <div class="sum-card"><div class="sc-label">Total Pages</div><div class="sc-val g" id="stTotal">0</div></div>
+                    <div class="sum-card"><div class="sc-label">404 Broken</div><div class="sc-val r" id="st404">0</div></div>
+                    <div class="sum-card"><div class="sc-label">Missing Alt</div><div class="sc-val a" id="stAlt">0</div></div>
+                    <div class="sum-card"><div class="sc-label">Avg Score</div><div class="sc-val g" id="stAvg">—</div></div>
+                </div>
+
+                <button class="export-btn" id="exportBtn">↓ Export Technical SEO Report</button>
             </div>
-          </div>
-          <div class="px-info">
-            <span>Title px: <span id="titlePx" style="color:var(--text)">0 / 600</span></span>
-            <span>Desc px: <span id="descPx" style="color:var(--text)">0 / 920</span></span>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- HEADINGS -->
-    <div class="mpane" id="mod-headings">
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:8px 13px;background:var(--bg2);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text2)">Semantic Heading Hierarchy</div>
-        <div class="htree" id="headingTree"></div>
-      </div>
-      <div id="hViolations"></div>
-    </div>
-
-    <!-- SCHEMA -->
-    <div class="mpane" id="mod-schema">
-      <div class="schema-layout">
-        <div>
-          <div class="label">Schema Type</div>
-          <select class="schema-sel" id="schemaType" onchange="buildSchemaFields()">
-            <option value="Organization">Organization</option>
-            <option value="Article">Article</option>
-            <option value="FAQPage">FAQ Dropdown</option>
-          </select>
-          <div id="schemaFields"></div>
-        </div>
-        <div class="schema-out">
-          <div class="schema-out-hd">
-            <span>JSON-LD Output</span>
-            <button class="copy-btn" onclick="copySchema()">Copy</button>
-          </div>
-          <div class="schema-code" id="schemaCode"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI RADAR -->
-    <div class="mpane" id="mod-ai">
-      <div class="ai-layout">
-        <div class="ai-ring-card">
-          <div class="ai-ring">
-            <svg width="100" height="100" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#1E2D3D" stroke-width="8"/>
-              <circle id="radarArc" cx="50" cy="50" r="42" fill="none" stroke="#10B981" stroke-width="8"
-                stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round"/>
-            </svg>
-            <div class="ai-score-num" id="aiNum" style="color:var(--green)">—</div>
-          </div>
-          <div class="ai-label">LLM Readiness</div>
-          <div class="ai-sub">AI extraction score</div>
-        </div>
-        <div class="ai-metrics" id="aiMetrics"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ PASTE AUDIT PANEL ══ -->
-  <div class="panel" id="panel-paste">
-    <div>
-      <div class="ph">Paste HTML Audit</div>
-      <div class="ps">Analyze any page instantly — no proxy, no CORS, no crawl required</div>
-    </div>
-    <div class="card" style="background:var(--bg2)">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.8">
-        <strong style="color:var(--green)">How to get page source:</strong><br>
-        <span style="color:var(--text3)">Chrome/Firefox:</span> Open the page → press <kbd style="background:var(--bg3);border:1px solid var(--border2);padding:1px 5px;border-radius:3px;font-size:10px">Ctrl+U</kbd> → select all → copy → paste below.<br>
-        <span style="color:var(--text3)">Or right-click anywhere →</span> <em>View Page Source</em>
-      </div>
-    </div>
-    <div class="card">
-      <div class="label">Page URL (optional — for SERP preview &amp; link analysis)</div>
-      <input class="url-input" id="pasteUrl2" type="url" placeholder="https://example.com/page" style="margin-bottom:12px">
-      <div class="label">Raw HTML Source</div>
-      <textarea class="paste-area" id="pasteHtml2" style="min-height:220px" placeholder="Paste full HTML source here…"></textarea>
-      <div class="err-banner" id="pasteErr2" style="margin-top:8px">⛔ Paste some HTML content first.</div>
-      <div style="margin-top:12px">
-        <button class="exec-btn" onclick="runPasteAudit2()">
-          <span>Run Full SEO Audit</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /main -->
-</div><!-- /app -->
-
-<script>
-// ═══════════════════════════
-// SAFE HELPERS
-// ═══════════════════════════
-const $ = id => document.getElementById(id);
-const $$ = sel => [...document.querySelectorAll(sel)];
-function setText(id, v){ const n=$(`${id}`); if(n) n.textContent=v; }
-function setHTML(id, v){ const n=$(`${id}`); if(n) n.innerHTML=v; }
-
-// ═══════════════════════════
-// CLOCK + PING
-// ═══════════════════════════
-(function tick(){
-  const n=new Date();
-  setText('clock', n.toLocaleTimeString('en-US',{hour12:false}));
-  setTimeout(tick, 1000);
-})();
-setInterval(()=>setText('pingVal',(Math.floor(Math.random()*28)+6)+'ms'), 3000);
-
-// ═══════════════════════════
-// STATE
-// ═══════════════════════════
-let pages = [], maxP = 10, crawling = false, curPage = null;
-
-// ═══════════════════════════
-// NAVIGATION
-// ═══════════════════════════
-function showPanel(id){
-  $$('.panel').forEach(p=>p.classList.remove('active'));
-  $$('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pan = $('panel-'+id); if(pan) pan.classList.add('active');
-  const nav = document.querySelector(`.nav-item[data-panel="${id}"]`);
-  if(nav) nav.classList.add('active');
-}
-$$('.nav-item[data-panel]').forEach(n=>n.addEventListener('click',()=>showPanel(n.dataset.panel)));
-$('backBtn').addEventListener('click',()=>showPanel('crawler'));
-$('navExport').addEventListener('click', exportReport);
-$('exportBtn').addEventListener('click', exportReport);
-$('navInspector').addEventListener('click',()=>{
-  if(pages.length){
-    showPanel('inspector');
-  } else {
-    showToast('⚠ Run an audit first — no pages to inspect yet.');
-  }
-});
-
-// depth selector
-$$('.dbtn').forEach(b=>b.addEventListener('click',()=>{
-  $$('.dbtn').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  maxP = +b.dataset.v;
-}));
-
-// module tabs
-$$('.mtab').forEach(t=>t.addEventListener('click',()=>{
-  $$('.mtab').forEach(x=>x.classList.remove('active'));
-  $$('.mpane').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  const p=$('mod-'+t.dataset.mod); if(p) p.classList.add('active');
-}));
-
-// PROXY FETCH
-const PROXIES = [
-  url => 'https://gentle-sunset-d772.kamayegabharat.workers.dev/?url=' + encodeURIComponent(url),
-  url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
-];
-
-// Track which proxy is currently healthy
-let proxyIndex = 0;
-
-async function proxyFetch(url, attempt=0){
-  if(attempt >= PROXIES.length) throw new Error('All proxies failed for: '+url);
-  let parsed;
-  try{ parsed=new URL(url); }catch(e){ throw new Error('Malformed URL'); }
-  if(!parsed.protocol.startsWith('http')) throw new Error('Only http/https supported');
-
-  const proxyUrl = PROXIES[(proxyIndex + attempt) % PROXIES.length](url);
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 12000);
-    let r;
-    try { r = await fetch(proxyUrl, {signal: ctrl.signal}); }
-    finally { clearTimeout(timer); }
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const text = await r.text();
-    // allorigins wraps in JSON; corsproxy.io + codetabs return raw HTML
-    try {
-      const d = JSON.parse(text);
-      if(d && typeof d.contents === 'string'){
-        if(!d.contents) throw new Error('Empty proxy response');
-        return {html: d.contents, realStatus: d.status?.http_code || 200};
-      }
-    } catch(e){}
-    // Raw HTML proxy
-    if(!text || text.length < 50) throw new Error('Too short — likely blocked');
-    return {html: text, realStatus: 200};
-  } catch(e){
-    console.warn('Proxy '+(proxyIndex+attempt)+' failed ('+PROXIES[(proxyIndex+attempt)%PROXIES.length].name||'fn'+'):',e.message);
-    return proxyFetch(url, attempt+1);
-  }
-}
-
-// Probe proxy health on load
-async function checkProxy(){
-  const pill = $('proxyPill'); if(!pill) return;
-  try{
-    // Probe with example.com — a guaranteed-live simple page
-    const res = await proxyFetch('https://example.com');
-    if(res && res.html && res.html.length > 100){
-      pill.className='proxy-pill ok';
-      pill.innerHTML='<span class="proxy-dot"></span>proxy online';
-    } else {
-      pill.className='proxy-pill fail';
-      pill.innerHTML='<span class="proxy-dot"></span>proxy weak — use Paste mode';
-    }
-  }catch(e){
-    pill.className='proxy-pill fail';
-    pill.innerHTML='<span class="proxy-dot"></span>proxy offline — use Paste mode';
-  }
-}
-checkProxy();
-
-// Smarter status: treat proxy errors & nearly-empty bodies as "unknown"
-// rather than hard 404, so real 404s come from real status codes
-function resolveStatus(proxyResult, pageUrl){
-  // No result at all — proxy itself failed, not the target page
-  if(!proxyResult) return {status:0, label:'Proxy Timeout', cls:'soth'};
-  const {html, realStatus} = proxyResult;
-
-  // allorigins reports the real HTTP status of the target page
-  if(realStatus === 0)   return {status:0,   label:'Unreachable',    cls:'soth'};
-  if(realStatus === 404) return {status:404,  label:'404 Not Found',  cls:'s404'};
-  if(realStatus === 403) return {status:403,  label:'403 Blocked',    cls:'soth'}; // not a dead page
-  if(realStatus === 401) return {status:401,  label:'401 Auth',       cls:'soth'};
-  if(realStatus >= 500)  return {status:realStatus, label:realStatus+' Server Err', cls:'soth'};
-  if(realStatus >= 400)  return {status:realStatus, label:realStatus+' Error',      cls:'s404'};
-  if(realStatus >= 300)  return {status:realStatus, label:realStatus+' Redirect',   cls:'soth'};
-
-  // realStatus is 200 (or undefined from raw-HTML proxies)
-  // Body sanity check — short body = proxy blocked/returned error page
-  if(!html || html.length < 150) return {status:0, label:'Proxy Blocked', cls:'soth'};
-  return {status:200, label:'200 OK', cls:'s200'};
-}
-
-// ═══════════════════════════
-// LINK EXTRACTOR
-// ═══════════════════════════
-function extractLinks(html, base){
-  const doc=new DOMParser().parseFromString(html,'text/html');
-  const origin=new URL(base).origin;
-  const out=new Set();
-  doc.querySelectorAll('a[href]').forEach(a=>{
-    try{
-      const abs=new URL(a.getAttribute('href'),base).href;
-      if(abs.startsWith(origin)&&!/[#?]|mailto:|tel:|\.pdf|\.jpg|\.png|\.svg|\.zip/i.test(abs)){
-        out.add(abs.replace(/\/$/,''));
-      }
-    }catch(e){}
-  });
-  return [...out];
-}
-
-// ═══════════════════════════
-// PAGE ANALYZER
-// ═══════════════════════════
-// Safe HTML parser — works in sandboxed iframes where DOMParser strips <head>
-function parseHTML(html){
-  // Use DOMParser for body content (headings, links, images etc.)
-  const doc = new DOMParser().parseFromString(html,'text/html');
-
-  // DOMParser in sandboxed iframes drops <title> and <meta> from <head>.
-  // Recover them with regex directly from the raw string — fast & reliable.
-  let title = doc.querySelector('title')?.textContent?.trim() || '';
-  if(!title){
-    const tm = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-    if(tm) title = tm[1].trim();
-  }
-
-  let desc = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
-  if(!desc){
-    const dm = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i)
-             || html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i);
-    if(dm) desc = dm[1].trim();
-  }
-
-  // canonical URL
-  let canonical = doc.querySelector('link[rel="canonical"]')?.getAttribute('href')?.trim() || '';
-  if(!canonical){
-    const cm = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']*)["']/i);
-    if(cm) canonical = cm[1].trim();
-  }
-
-  // robots meta
-  const robotsEl = doc.querySelector('meta[name="robots"]');
-  let robots = robotsEl?.getAttribute('content')?.trim() || '';
-  if(!robots){
-    const rm = html.match(/<meta[^>]+name=["']robots["'][^>]+content=["']([^"']*)["']/i);
-    if(rm) robots = rm[1].trim();
-  }
-
-  return {doc, title, desc, canonical, robots};
-}
-
-function analyzePage(html, url){
-  const {doc, title, desc, canonical, robots} = parseHTML(html);
-
-  const h1s   = [...doc.querySelectorAll('h1')].map(h=>h.textContent.trim());
-  const imgs  = [...doc.querySelectorAll('img')];
-  const missingAlt = imgs.filter(i=>!i.getAttribute('alt')&&!i.getAttribute('aria-label')).length;
-  const headingNodes = [...doc.querySelectorAll('h1,h2,h3,h4,h5,h6')]
-    .map(h=>({tag:h.tagName.toLowerCase(), text:h.textContent.trim()}));
-  const hasSchema   = doc.querySelectorAll('script[type="application/ld+json"]').length;
-  const hasSemantic = doc.querySelectorAll('article,section,main,nav,aside,header,footer').length;
-  const hasLists    = doc.querySelectorAll('ul,ol').length;
-  const hasTables   = doc.querySelectorAll('table').length;
-  const wordCount   = (doc.body?.innerText||doc.body?.textContent||'').trim().split(/\s+/).filter(Boolean).length;
-
-  let score = 100;
-  if(!title)            score -= 15;
-  if(!desc)             score -= 10;
-  if(!h1s.length)       score -= 15;
-  if(h1s.length > 1)    score -= 10;
-  if(missingAlt > 0)    score -= Math.min(15, missingAlt * 3);
-  if(title.length > 60) score -= 5;
-  if(desc.length > 160) score -= 5;
-  if(robots && /noindex/i.test(robots)) score -= 10;
-  score = Math.max(0, score);
-
-  const aiScore = Math.min(100,
-    (hasSemantic ? 20 : 0) +
-    (hasTables   ? 15 : 0) +
-    (hasLists    ? 15 : 0) +
-    (hasSchema   ? 25 : 0) +
-    (headingNodes.length ? 15 : 0) +
-    (desc        ? 10 : 0)
-  );
-
-  return {title, desc, canonical, robots, h1s, missingAlt, headingNodes,
-          hasSchema, hasSemantic, hasLists, hasTables, wordCount, score, aiScore, url};
-}
-
-// ═══════════════════════════
-// PROGRESS HELPER
-// ═══════════════════════════
-function setProgress(label,pct){
-  setText('progLabel',label);
-  setText('progPct',Math.round(pct)+'%');
-  const f=$('progFill'); if(f) f.style.width=Math.round(pct)+'%';
-}
-
-// ═══════════════════════════
-// CRAWL ENGINE
-// ═══════════════════════════
-async function crawl(){
-  const urlEl=$('urlInput'); if(!urlEl) return;
-  const raw=urlEl.value.trim();
-  if(!raw||crawling) return;
-
-  // validate
-  let root;
-  const errEl=$('urlErr');
-  try{
-    const p=new URL(raw);
-    if(!p.protocol.startsWith('http')) throw new Error('protocol');
-    root=p.href;
-    if(errEl) errEl.style.display='none';
-  }catch(e){
-    if(errEl) errEl.style.display='block';
-    return;
-  }
-
-  // reset UI
-  crawling=true; pages=[];
-  const btn=$('execBtn');
-  if(btn){btn.disabled=true;btn.classList.add('loading');}
-  const grid=$('grid'); if(grid) grid.innerHTML='';
-  const ge=$('gridEmpty'); if(ge) ge.style.display='none';
-  const pw=$('progWrap'); if(pw) pw.classList.add('show');
-  updateStats();
-
-  const visited=new Set();
-  const queue=[root.replace(/\/$/,'')];
-  visited.add(queue[0]);
-  let done=0;
-
-  while(queue.length&&done<maxP){
-    const batch=queue.splice(0,2);
-    setProgress('Crawling: '+batch[0].replace(/https?:\/\//,'').slice(0,50),(done/maxP)*100);
-
-    await Promise.allSettled(batch.map(async pageUrl=>{
-      if(done>=maxP) return;
-      await new Promise(r=>setTimeout(r,500));
-      let analysis, proxyResult=null;
-      let statusInfo={status:0,label:'Proxy Err',cls:'soth'};
-      try{
-        proxyResult=await proxyFetch(pageUrl);
-        statusInfo=resolveStatus(proxyResult, pageUrl);
-        if(proxyResult && proxyResult.html && proxyResult.html.length>200){
-          analysis=analyzePage(proxyResult.html, pageUrl);
-          extractLinks(proxyResult.html, pageUrl).forEach(l=>{
-            if(!visited.has(l)&&visited.size<maxP*4){ visited.add(l); queue.push(l); }
-          });
-        }
-      }catch(e){
-        console.warn('Fetch failed for "'+pageUrl+'":', e.message);
-        statusInfo={status:0,label:'Proxy Err',cls:'soth'};
-      }
-      if(!analysis){
-        analysis={title:'',desc:'',h1s:[],missingAlt:0,headingNodes:[],hasSchema:0,hasSemantic:0,hasLists:0,hasTables:0,score:0,aiScore:0,url:pageUrl};
-      }
-      const pg={...analysis,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:pageUrl,id:'pg'+Date.now()+Math.random()};
-      pages.push(pg); done++;
-      addRow(pg); updateStats();
-    }));
-  }
-
-  setProgress('Audit complete — '+pages.length+' pages analyzed',100);
-  if(btn){btn.disabled=false;btn.classList.remove('loading');}
-  crawling=false;
-
-  const badge=$('pageBadge');
-  if(badge){badge.textContent=pages.length;badge.style.display='inline';}
-}
-
-$('execBtn').addEventListener('click',crawl);
-$('urlInput').addEventListener('input',()=>{
-  const e=$('urlErr'); if(e) e.style.display='none';
-});
-
-// ═══════════════════════════
-// GRID ROW
-// ═══════════════════════════
-function addRow(pg){
-  const grid=$('grid'); if(!grid) return;
-  const row=document.createElement('div');
-  row.className='grid-row';
-  const path=pg.url.replace(/https?:\/\/[^/]+/,'')||'/';
-  const sc=pg.statusCls||(pg.status===200?'s200':pg.status===404?'s404':'soth');
-  const st=pg.statusLabel||(pg.status===200?'200 OK':pg.status?pg.status+' Err':'Proxy Err');
-  const qc=pg.score>=75?'qhi':pg.score>=50?'qmi':'qlo';
-  // For ambiguous proxy statuses add a note icon with tooltip
-  const isProxyIssue = pg.status===0 || (pg.statusCls==='soth' && pg.status!==301 && pg.status!==302);
-  const statusNote = isProxyIssue
-    ? ` <span title="Proxy issue — page may actually be live. Use Paste mode to verify." style="cursor:help;opacity:.7">⚠</span>`
-    : '';
-  row.innerHTML=`
-    <div class="ucell" title="${pg.url}">${path||'/'}</div>
-    <div class="scell ${sc}">${st}${statusNote}</div>
-    <div class="qcell ${qc}">${pg.score>0?pg.score+'/100':'—'}</div>
-    <div class="acell"><button class="drill" onclick="openInspector('${pg.id}')">Inspect</button></div>`;
-  grid.appendChild(row);
-}
-
-// ═══════════════════════════
-// STATS
-// ═══════════════════════════
-function updateStats(){
-  const t=pages.length;
-  const e404=pages.filter(p=>p.status===404).length;
-  const alt=pages.reduce((s,p)=>s+(p.missingAlt||0),0);
-  const titles=pages.map(p=>p.title).filter(Boolean);
-  const dup=titles.length-new Set(titles).size;
-  const noh1=pages.filter(p=>p.h1s&&!p.h1s.length&&p.status===200).length;
-  const sc=pages.filter(p=>p.status===200).map(p=>p.score);
-  const avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
-  setText('stTotal',t); setText('st404',e404); setText('stAlt',alt);
-  setText('stDup',dup); setText('stNoH1',noh1); setText('stAvg',avg!==null?avg:'—');
-}
-
-// ═══════════════════════════
-// INSPECTOR
-// ═══════════════════════════
-function openInspector(id){
-  const pg=pages.find(p=>p.id===id); if(!pg) return;
-  curPage=pg;
-  setText('ddUrl', pg.url);
-  // Show extra parsed metadata below URL
-  let metaExtra='';
-  if(pg.canonical && pg.canonical!==pg.url) metaExtra+=`<span style="margin-right:12px">🔗 canonical: <a href="${pg.canonical}" style="color:var(--blue);font-family:var(--mono);font-size:11px">${pg.canonical.slice(0,60)}</a></span>`;
-  if(pg.robots) metaExtra+=`<span style="color:var(--amber);font-family:var(--mono);font-size:11px">🤖 robots: ${pg.robots}</span>`;
-  if(pg.wordCount) metaExtra+=`<span style="color:var(--text3);font-family:var(--mono);font-size:11px;margin-left:12px">~${pg.wordCount} words</span>`;
-  const extraEl=$('ddMeta');
-  if(extraEl) extraEl.innerHTML=metaExtra;
-
-  // reset tabs to Meta
-  $$('.mtab').forEach(t=>t.classList.remove('active'));
-  $$('.mpane').forEach(t=>t.classList.remove('active'));
-  const mt=document.querySelector('.mtab[data-mod="meta"]');
-  if(mt) mt.classList.add('active');
-  const mp=$('mod-meta'); if(mp) mp.classList.add('active');
-
-  loadMeta(pg);
-  loadHeadings(pg);
-  loadAI(pg);
-  buildSchemaFields(pg);
-  showPanel('inspector');
-}
-
-// ═══════════════════════════
-// MODULE 1 — META
-// ═══════════════════════════
-function loadMeta(pg){
-  const mt=$('metaTitle'); if(mt) mt.value=pg.title||'';
-  const md=$('metaDesc');  if(md) md.value=pg.desc||'';
-  setText('serpSite',pg.url||'');
-  syncSerp();
-}
-
-function syncSerp(){
-  const t=$('metaTitle')?.value||'';
-  const d=$('metaDesc')?.value||'';
-
-  const tl=t.length, dl=d.length;
-  const tpx=Math.round(tl*9.2), dpx=Math.round(dl*6.8);
-  const tc=tl<30?'bad':tl<=60?'ok':tl<=70?'warn':'bad';
-  const dc=dl<70?'warn':dl<=160?'ok':'bad';
-
-  setText('titleCC',tl+' ch');
-  const tcc=$('titleCC'); if(tcc) tcc.className='cc '+tc;
-  const tb=$('titleBar');  if(tb) tb.className='pxbar '+tc;
-  setText('titlePx',tpx+' / 600');
-
-  setText('descCC',dl+' ch');
-  const dcc=$('descCC'); if(dcc) dcc.className='cc '+dc;
-  const db=$('descBar');  if(db) db.className='pxbar '+dc;
-  setText('descPx',dpx+' / 920');
-
-  setText('serpTitle',t||'Page Title');
-  setText('serpDesc',d||(dl===0?'No meta description set.':''));
-}
-
-function serpMode(m){
-  const p=$('serpPreview'); if(!p) return;
-  p.className='serp-preview'+(m==='mobile'?' mobile':'');
-  $$('.stbtn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===m));
-}
-
-// ═══════════════════════════
-// MODULE 2 — HEADINGS
-// ═══════════════════════════
-function loadHeadings(pg){
-  const tree=$('headingTree'); if(!tree) return;
-  const vwrap=$('hViolations'); if(!vwrap) return;
-  const violations=[];
-
-  if(!pg.headingNodes||!pg.headingNodes.length){
-    tree.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px">No heading elements found on this page.</div>';
-    if(pg.status===200) violations.push('No heading elements detected on this page.');
-  } else {
-    const h1count=pg.headingNodes.filter(h=>h.tag==='h1').length;
-    let prevLevel=0, html='';
-    pg.headingNodes.forEach((h,i)=>{
-      const lv=parseInt(h.tag[1]);
-      const isDupH1=h.tag==='h1'&&pg.headingNodes.slice(0,i).some(p=>p.tag==='h1');
-      const isSkip=lv>prevLevel+1&&prevLevel>0;
-      const errTxt=isDupH1?'⚠ dup H1':isSkip?`⚠ skip H${prevLevel+1}`:'';
-      html+=`<div class="hnode ind${lv}">
-        <span class="htag ${h.tag}">${h.tag.toUpperCase()}</span>
-        <span class="htext">${(h.text||'(empty)').slice(0,90)}</span>
-        ${errTxt?`<span class="herr">${errTxt}</span>`:''}
-      </div>`;
-      prevLevel=lv;
-    });
-    tree.innerHTML=html;
-    if(!h1count) violations.push('Missing H1 — every page must have exactly one H1.');
-    if(h1count>1) violations.push(`Duplicate H1 — found ${h1count} H1 tags. Only 1 allowed.`);
-    let pv=0;
-    pg.headingNodes.forEach(h=>{
-      const l=parseInt(h.tag[1]);
-      if(l>pv+1&&pv>0) violations.push(`Level skip: H${pv} → H${l} (missing H${pv+1}).`);
-      pv=l;
-    });
-  }
-
-  if(violations.length){
-    vwrap.innerHTML=`<div class="violations">${violations.map(v=>`<div class="vitem">⛔ ${v}</div>`).join('')}</div>`;
-  } else {
-    vwrap.innerHTML=`<div class="ok-banner">✓ Heading hierarchy is valid — no SEO violations detected.</div>`;
-  }
-}
-
-// ═══════════════════════════
-// MODULE 3 — SCHEMA
-// ═══════════════════════════
-const SCHEMAS={
-  Organization:{
-    fields:['Organization Name','Website URL','Logo URL','Phone','Description','Street','City','Country'],
-    build(v){return{"@context":"https://schema.org","@type":"Organization","name":v[0]||"","url":v[1]||"","logo":v[2]||"","telephone":v[3]||"","description":v[4]||"","address":{"@type":"PostalAddress","streetAddress":v[5]||"","addressLocality":v[6]||"","addressCountry":v[7]||""}};}
-  },
-  Article:{
-    fields:['Headline','Author Name','Date Published','Date Modified','URL','Publisher'],
-    build(v){return{"@context":"https://schema.org","@type":"Article","headline":v[0]||"","author":{"@type":"Person","name":v[1]||""},"datePublished":v[2]||"","dateModified":v[3]||"","url":v[4]||"","publisher":{"@type":"Organization","name":v[5]||""}};}
-  },
-  FAQPage:{
-    fields:['Question 1','Answer 1','Question 2','Answer 2','Question 3','Answer 3'],
-    build(v){const me=[];for(let i=0;i<v.length;i+=2)if(v[i])me.push({"@type":"Question","name":v[i],"acceptedAnswer":{"@type":"Answer","text":v[i+1]||""}});return{"@context":"https://schema.org","@type":"FAQPage","mainEntity":me};}
-  }
-};
-
-function buildSchemaFields(pg){
-  const sel=$('schemaType'); if(!sel) return;
-  const cfg=SCHEMAS[sel.value];
-  const wrap=$('schemaFields'); if(!wrap) return;
-  wrap.innerHTML=cfg.fields.map((f,i)=>`
-    <div class="sfield">
-      <label>${f}</label>
-      <input placeholder="${f}" data-i="${i}" oninput="buildSchema()">
-    </div>`).join('');
-  // pre-fill from passed page or curPage
-  const source = pg || curPage;
-  if(source){
-    const ins=$$('#schemaFields input');
-    if(ins[0] && source.title) ins[0].value = source.title;
-    if(ins[1] && source.url)   ins[1].value = source.url;
-    if(ins[2] && source.canonical) ins[2].value = source.canonical;
-  }
-  buildSchema();
-}
-
-function buildSchema(){
-  const sel=$('schemaType'); if(!sel) return;
-  const cfg=SCHEMAS[sel.value];
-  const vals=$$('#schemaFields input').map(i=>i.value);
-  const out=$('schemaCode'); if(!out) return;
-  out.textContent=`<script type="application/ld+json">\n${JSON.stringify(cfg.build(vals),null,2)}\n<\/script>`;
-}
-
-function copySchema(){
-  const out=$('schemaCode'); if(!out) return;
-  navigator.clipboard.writeText(out.textContent).then(()=>{
-    const b=document.querySelector('.copy-btn'); if(!b) return;
-    b.textContent='Copied!'; b.style.color='var(--green)';
-    setTimeout(()=>{b.textContent='Copy';b.style.color='';},2000);
-  }).catch(()=>{});
-}
-
-// ═══════════════════════════
-// MODULE 4 — AI RADAR
-// ═══════════════════════════
-function loadAI(pg){
-  const sc=pg.aiScore||0;
-  const arc=$('radarArc');
-  if(arc){
-    arc.style.stroke=sc>=70?'var(--green)':sc>=40?'var(--amber)':'var(--red)';
-    setTimeout(()=>arc.style.strokeDashoffset=264-(sc/100)*264,80);
-  }
-  const num=$('aiNum');
-  if(num){num.textContent=sc;num.style.color=sc>=70?'var(--green)':sc>=40?'var(--amber)':'var(--red)';}
-
-  const metrics=[
-    {l:'Semantic HTML Landmarks',   v:pg.hasSemantic?Math.min(100,pg.hasSemantic*20):15},
-    {l:'Structured Data / JSON-LD', v:pg.hasSchema?90:10},
-    {l:'Heading Hierarchy',         v:pg.headingNodes?.length?70:20},
-    {l:'Lists & Tables',            v:Math.min(100,(pg.hasLists||0)*20+(pg.hasTables||0)*15)},
-    {l:'Meta Description',          v:pg.desc?80:5},
-  ];
-  const wrap=$('aiMetrics'); if(!wrap) return;
-  wrap.innerHTML=metrics.map(m=>{
-    const cls=m.v>=70?'hi':m.v>=40?'mi':'lo';
-    const col=m.v>=70?'var(--green)':m.v>=40?'var(--amber)':'var(--red)';
-    return`<div class="ametric">
-      <div class="ametric-hd"><span>${m.l}</span><span style="color:${col};font-weight:700">${m.v}%</span></div>
-      <div class="abar"><div class="afill ${cls}" style="width:0" data-t="${m.v}%"></div></div>
-    </div>`;
-  }).join('');
-  setTimeout(()=>$$('.afill').forEach(f=>f.style.width=f.dataset.t),80);
-}
-
-// ═══════════════════════════
-// EXPORT
-// ═══════════════════════════
-function exportReport(){
-  if(!pages.length){ const e=$('urlErr'); if(e){e.textContent='⛔ No crawl data yet — run an audit first.';e.style.display='block';} return; }
-  const date=new Date().toLocaleString();
-  const t=pages.length, e404=pages.filter(p=>p.status===404).length;
-  const alt=pages.reduce((s,p)=>s+(p.missingAlt||0),0);
-  const titles=pages.map(p=>p.title).filter(Boolean);
-  const dup=titles.length-new Set(titles).size;
-  const sc=pages.filter(p=>p.status===200).map(p=>p.score);
-  const avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):0;
-  const rows=pages.map(p=>`<tr>
-    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url}</td>
-    <td style="text-align:center;color:${p.status===200?'#10B981':'#EF4444'}">${p.status}</td>
-    <td style="text-align:center;color:${p.score>=75?'#10B981':p.score>=50?'#F59E0B':'#EF4444'}">${p.score}/100</td>
-    <td>${p.title||'<em style="color:#64748b">missing</em>'}</td>
-    <td style="text-align:center">${p.missingAlt||0}</td>
-  </tr>`).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>AuditForge Report</title>
-  <style>body{font-family:system-ui;background:#080C0F;color:#E2E8F0;padding:28px}h1{color:#10B981;font-size:26px;margin-bottom:4px}.sub{color:#64748B;font-size:12px;font-family:monospace;margin-bottom:20px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}.card{background:#0D1117;border:1px solid #1E2D3D;border-radius:8px;padding:14px}.cl{font-size:10px;font-weight:700;color:#4A5568;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;font-family:monospace}.cv{font-size:24px;font-weight:800;font-family:monospace}.g{color:#10B981}.r{color:#EF4444}.a{color:#F59E0B}table{width:100%;border-collapse:collapse;font-size:12px;font-family:monospace}th{background:#0D1117;color:#64748B;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:9px 11px;text-align:left;border-bottom:1px solid #1E2D3D}td{padding:9px 11px;border-bottom:1px solid #1E2D3D}</style></head>
-  <body><h1>AuditForge AI Pro — SEO Report</h1><div class="sub">Generated: ${date}</div>
-  <div class="cards">
-    <div class="card"><div class="cl">Total</div><div class="cv g">${t}</div></div>
-    <div class="card"><div class="cl">404s</div><div class="cv r">${e404}</div></div>
-    <div class="card"><div class="cl">Missing Alt</div><div class="cv a">${alt}</div></div>
-    <div class="card"><div class="cl">Dup Titles</div><div class="cv a">${dup}</div></div>
-    <div class="card"><div class="cl">Avg Score</div><div class="cv g">${avg}/100</div></div>
-  </div>
-  <table><thead><tr><th>URL</th><th>Status</th><th>Score</th><th>Title</th><th>Alt Missing</th></tr></thead><tbody>${rows}</tbody></table>
-  </body></html>`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
-  a.download='auditforge-report-'+Date.now()+'.html';
-  a.click();
-}
-
-// ═══════════════════════════
-// MODE TOGGLE
-// ═══════════════════════════
-function setMode(m){
-  const isCrawl = m==='crawl';
-  $('crawlMode').style.display = isCrawl?'':'none';
-  $('pasteMode').style.display  = isCrawl?'none':'';
-  $('modeCrawl').classList.toggle('active', isCrawl);
-  $('modePaste').classList.toggle('active', !isCrawl);
-}
-
-// ═══════════════════════════
-// PASTE AUDIT (inline card)
-// ═══════════════════════════
-function runPasteAudit(){
-  const html=($('pasteHtml')||{}).value?.trim()||'';
-  const errEl=$('pasteErr');
-  if(!html){ if(errEl) errEl.style.display='block'; return; }
-  if(errEl) errEl.style.display='none';
-  const url=($('pasteUrl')||{}).value?.trim()||'https://pasted-page.local';
-  _processPastedHTML(html, url);
-}
-
-// ═══════════════════════════
-// PASTE AUDIT (dedicated panel)
-// ═══════════════════════════
-function runPasteAudit2(){
-  const html=($('pasteHtml2')||{}).value?.trim()||'';
-  const errEl=$('pasteErr2');
-  if(!html){ if(errEl) errEl.style.display='block'; return; }
-  if(errEl) errEl.style.display='none';
-  const url=($('pasteUrl2')||{}).value?.trim()||'https://pasted-page.local';
-  _processPastedHTML(html, url);
-}
-
-function clearPaste(){
-  const h=$('pasteHtml'); if(h) h.value='';
-  const u=$('pasteUrl');  if(u) u.value='';
-  const e=$('pasteErr');  if(e) e.style.display='none';
-}
-
-function _processPastedHTML(html, url){
-  // analyze
-  const analysis = analyzePage(html, url);
-  const pg = {
-    ...analysis,
-    status: 200,
-    statusLabel: '200 OK (pasted)',
-    statusCls: 's200',
-    url, id:'paste'+Date.now(),
-    isPasted: true
-  };
-  // add to pages list (dedupe by url)
-  const existing = pages.findIndex(p=>p.url===url&&p.isPasted);
-  if(existing>=0) pages[existing]=pg; else pages.push(pg);
-  updateStats();
-
-  // rebuild grid
-  const grid=$('grid'); if(!grid) return;
-  // refresh or append row
-  const existingRow=grid.querySelector(`[data-id="${pg.id}"]`);
-  if(!existingRow) {
-    const ge=$('gridEmpty'); if(ge) ge.style.display='none';
-    addRow(pg);
-  }
-
-  // update badge
-  const badge=$('pageBadge');
-  if(badge){badge.textContent=pages.length;badge.style.display='inline';}
-
-  // open inspector
-  openInspector(pg.id);
-
-  // show a toast
-  showToast('Pasted HTML analyzed — '+pages.length+' page'+(pages.length>1?'s':'')+' total');
-}
-
-// ═══════════════════════════
-// TOAST
-// ═══════════════════════════
-function showToast(msg){
-  let t=document.getElementById('toast');
-  if(!t){
-    t=document.createElement('div');
-    t.id='toast';
-    t.style.cssText='position:fixed;bottom:20px;right:20px;background:#10B981;color:#000;padding:10px 18px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:700;z-index:9999;transition:opacity .3s;pointer-events:none';
-    document.body.appendChild(t);
-  }
-  t.textContent=msg;
-  t.style.opacity='1';
-  clearTimeout(t._hide);
-  t._hide=setTimeout(()=>t.style.opacity='0',2800);
-}
-
-// ═══════════════════════════
-// INIT
-// ═══════════════════════════
-// bind paste panel nav
-const navPaste=$('navPaste');
-if(navPaste) navPaste.addEventListener('click',()=>showPanel('paste'));
-
-// ═══════════════════════════
-// MOBILE SIDEBAR TOGGLE
-// ═══════════════════════════
-function toggleSidebar(){
-  const sb=document.getElementById('sidebar');
-  const ov=document.getElementById('sidebarOverlay');
-  const btn=document.getElementById('menuToggle');
-  const isOpen=sb.classList.toggle('open');
-  ov.classList.toggle('open',isOpen);
-  btn.textContent=isOpen?'✕':'☰';
-}
-function closeSidebar(){
-  const sb=document.getElementById('sidebar');
-  const ov=document.getElementById('sidebarOverlay');
-  const btn=document.getElementById('menuToggle');
-  sb.classList.remove('open');
-  ov.classList.remove('open');
-  btn.textContent='☰';
-}
-// Close sidebar on nav-item click (mobile)
-document.querySelectorAll('.nav-item').forEach(item=>{
-  item.addEventListener('click',()=>{
-    if(window.innerWidth<=768) closeSidebar();
-  });
-});
-
-buildSchemaFields();
-syncSerp();
-</script>
+            <!-- ══ INSPECTOR PANEL ══ -->
+            <div class="panel" id="panel-inspector">
+                <div>
+                    <button class="back-btn" id="backBtn">← Back to Crawler</button>
+                    <div class="ph" id="ddTitle">Page Inspector</div>
+                    <div class="ps" id="ddUrl" style="color:var(--green)"></div>
+                    <div id="ddMeta" style="margin-top:6px;display:flex;gap:8px"></div>
+                </div>
+
+                <div class="mod-tabs" id="modTabs">
+                    <button class="mtab active" data-mod="meta">Metadata</button>
+                    <button class="mtab" data-mod="headings">Headings</button>
+                    <button class="mtab" data-mod="keywords">Keywords</button>
+                    <button class="mtab" data-mod="readability">Readability</button>
+                    <button class="mtab" data-mod="images">Images</button>
+                    <button class="mtab" data-mod="links">Links</button>
+                    <button class="mtab" data-mod="schema">Schema</button>
+                    <button class="mtab" data-mod="ai">AI Radar</button>
+                    <button class="mtab" data-mod="issues">Issues <span class="nbadge r" id="issueBadge">0</span></button>
+                    <button class="mtab" data-mod="suggestions">AI Tips</button>
+                </div>
+
+                <!-- Mod Panes -->
+                <div class="mpane active" id="mod-meta">
+                    <div class="meta-grid">
+                        <div class="mfield">
+                            <div class="mfield-hd">Title Tag <span class="cc" id="titleCC">0 ch</span></div>
+                            <textarea id="metaTitle" rows="2" oninput="syncSerp()"></textarea>
+                            <div class="pxbar ok" id="titleBar"></div>
+                        </div>
+                        <div class="serp-box">
+                            <div class="serp-preview" id="serpPreview">
+                                <div class="serp-site" id="serpSite"></div>
+                                <div class="serp-title" id="serpTitle">Page Title Here</div>
+                                <div class="serp-desc" id="serpDesc">Description preview...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mpane" id="mod-headings"><div class="htree" id="headingTree"></div><div id="hViolations"></div></div>
+                <div class="mpane" id="mod-keywords"></div>
+                <div class="mpane" id="mod-readability"></div>
+                <div class="mpane" id="mod-images"></div>
+                <div class="mpane" id="mod-links"></div>
+                <div class="mpane" id="mod-schema">
+                    <div class="schema-layout">
+                        <select class="schema-sel" id="schemaType" onchange="buildSchemaFields()"></select>
+                        <div id="schemaFields"></div>
+                        <div class="schema-code" id="schemaCode"></div>
+                    </div>
+                </div>
+                <div class="mpane" id="mod-ai"></div>
+                <div class="mpane" id="mod-issues"></div>
+                <div class="mpane" id="mod-suggestions"></div>
+            </div>
+
+            <!-- ══ HISTORY PANEL ══ -->
+            <div class="panel" id="panel-history">
+                <div class="ph">Audit History</div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+
+            <!-- ══ COMPARE PANEL ══ -->
+            <div class="panel" id="panel-compare">
+                <div class="ph">Compare Audits</div>
+                <div class="card row">
+                    <select id="compareA" class="schema-sel"></select>
+                    <select id="compareB" class="schema-sel"></select>
+                    <button class="exec-btn" onclick="runComparison()">Compare</button>
+                </div>
+                <div id="compareResult"></div>
+            </div>
+
+        </div><!-- /main -->
+    </div><!-- /app -->
+
+    <!-- External JS -->
+    <script src="js/services.js"></script>
 </body>
 </html>
