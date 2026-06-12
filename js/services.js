@@ -678,10 +678,32 @@ const SCHEMAS={
     build(v){const me=[];for(let i=0;i<v.length;i+=2)if(v[i])me.push({"@type":"Question","name":v[i],"acceptedAnswer":{"@type":"Answer","text":v[i+1]||""}});return{"@context":"https://schema.org","@type":"FAQPage","mainEntity":me};}
   }
 };
+
+/* Populate the schemaType <select> with all available schema types */
+function initSchemaSelect(){
+  const sel=$('schemaType'); if(!sel) return;
+  if(sel.options.length===0){
+    Object.keys(SCHEMAS).forEach(k=>{
+      const opt=document.createElement('option');
+      opt.value=k; opt.textContent=k;
+      sel.appendChild(opt);
+    });
+  }
+}
+
 function buildSchemaFields(pg){
+  initSchemaSelect();
   const sel=$('schemaType'); if(!sel) return;
   const cfg=SCHEMAS[sel.value];
   const wrap=$('schemaFields'); if(!wrap) return;
+
+  /* Defensive: handle missing or malformed schema definition */
+  if(!cfg || !Array.isArray(cfg.fields)){
+    wrap.innerHTML='<div style="color:var(--text3);font-family:var(--mono);font-size:12px;padding:8px">No schema type selected or schema definition unavailable.</div>';
+    const out=$('schemaCode'); if(out) out.textContent='';
+    return;
+  }
+
   wrap.innerHTML=cfg.fields.map((f,i)=>`
     <div class="sfield">
       <label>${f}</label>
@@ -697,8 +719,10 @@ function buildSchemaFields(pg){
   buildSchema();
 }
 function buildSchema(){
+  initSchemaSelect();
   const sel=$('schemaType'); if(!sel) return;
   const cfg=SCHEMAS[sel.value];
+  if(!cfg || !Array.isArray(cfg.fields)) return;
   const vals=$$('#schemaFields input').map(i=>i.value);
   const out=$('schemaCode'); if(!out) return;
   out.textContent=`<script type="application/ld+json">\n${JSON.stringify(cfg.build(vals),null,2)}\n<\/script>`;
