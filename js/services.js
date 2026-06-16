@@ -526,13 +526,41 @@ function addRow(pg){
   const st=pg.statusLabel||(pg.status===200?'200 OK':pg.status?pg.status+' Err':'Proxy Err');
   const qc=pg.score>=75?'qhi':pg.score>=50?'qmi':'qlo';
   const isProxyIssue=pg.status===0||(pg.statusCls==='soth'&&pg.status!==301&&pg.status!==302);
-  const statusNote=isProxyIssue
-    ?` <span title="Proxy issue — page may actually be live. Use Paste mode to verify." style="cursor:help;opacity:.7">⚠</span>`:'';
-  row.innerHTML=`
-    <div class="ucell" title="${pg.url}">${path||'/'}</div>
-    <div class="scell ${sc}">${st}${statusNote}</div>
-    <div class="qcell ${qc}">${pg.score>0?pg.score+'/100':'—'}</div>
-    <div class="acell"><button class="drill" onclick="openInspector('${pg.id}')">Inspect</button></div>`;
+
+  const ucell=document.createElement('div');
+  ucell.className='ucell';
+  ucell.title=String(pg.url||'');
+  ucell.textContent=path||'/';
+
+  const scell=document.createElement('div');
+  scell.className='scell '+sc;
+  scell.textContent=st;
+  if(isProxyIssue){
+    scell.appendChild(document.createTextNode(' '));
+    const warn=document.createElement('span');
+    warn.title='Proxy issue — page may actually be live. Use Paste mode to verify.';
+    warn.style.cursor='help';
+    warn.style.opacity='.7';
+    warn.textContent='⚠';
+    scell.appendChild(warn);
+  }
+
+  const qcell=document.createElement('div');
+  qcell.className='qcell '+qc;
+  qcell.textContent=pg.score>0?pg.score+'/100':'—';
+
+  const acell=document.createElement('div');
+  acell.className='acell';
+  const btn=document.createElement('button');
+  btn.className='drill';
+  btn.textContent='Inspect';
+  btn.addEventListener('click',()=>openInspector(pg.id));
+  acell.appendChild(btn);
+
+  row.appendChild(ucell);
+  row.appendChild(scell);
+  row.appendChild(qcell);
+  row.appendChild(acell);
   grid.appendChild(row);
 }
 
