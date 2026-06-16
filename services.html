@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" type="image/svg+xml" href="/favicon/auditforgeai-logo-512.svg">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#22C55E">
-    
+
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="AuditForge AI Pro">
@@ -21,7 +21,7 @@
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
+
     <!-- External CSS -->
     <link rel="stylesheet" href="css/services.css">
 
@@ -79,7 +79,8 @@
                     <span class="nbadge g" id="pageBadge" style="display:none">0</span>
                 </div>
                 <div class="nav-sec">Tools</div>
-                <div class="nav-item" data-panel="paste" id="navPaste">
+                <!-- FIX: navPaste now uses setMode+showPanel instead of a missing panel -->
+                <div class="nav-item" id="navPaste">
                     <span class="ico">⌗</span> Paste HTML Audit
                 </div>
                 <div class="nav-sec">Reports</div>
@@ -117,7 +118,7 @@
                         </div>
                         <input class="url-input" id="urlInput" type="url" placeholder="https://example.com">
                         <div class="err-banner" id="urlErr">⛔ Enter a valid https:// URL to crawl.</div>
-                        
+
                         <div class="row">
                             <div>
                                 <div class="label" style="margin-bottom:6px">Max Pages</div>
@@ -170,14 +171,22 @@
                     <div id="grid"><div class="grid-empty" id="gridEmpty">No pages crawled yet.</div></div>
                 </div>
 
+                <!-- STATS — includes stDup and stNoH1 (were missing) -->
                 <div class="sum-grid">
                     <div class="sum-card"><div class="sc-label">Total Pages</div><div class="sc-val g" id="stTotal">0</div></div>
                     <div class="sum-card"><div class="sc-label">404 Broken</div><div class="sc-val r" id="st404">0</div></div>
                     <div class="sum-card"><div class="sc-label">Missing Alt</div><div class="sc-val a" id="stAlt">0</div></div>
+                    <div class="sum-card"><div class="sc-label">Dup Titles</div><div class="sc-val a" id="stDup">0</div></div>
+                    <div class="sum-card"><div class="sc-label">No H1</div><div class="sc-val r" id="stNoH1">0</div></div>
                     <div class="sum-card"><div class="sc-label">Avg Score</div><div class="sc-val g" id="stAvg">—</div></div>
                 </div>
 
-                <button class="export-btn" id="exportBtn">↓ Export Technical SEO Report</button>
+                <!-- EXPORT BUTTONS — JSON and Markdown now have triggers -->
+                <div class="export-group">
+                    <button class="exp-btn primary" id="exportBtn">↓ HTML Report</button>
+                    <button class="exp-btn" onclick="exportJSON()">↓ JSON Export</button>
+                    <button class="exp-btn" onclick="exportMarkdown()">↓ Markdown</button>
+                </div>
             </div>
 
             <!-- ══ INSPECTOR PANEL ══ -->
@@ -186,9 +195,10 @@
                     <button class="back-btn" id="backBtn">← Back to Crawler</button>
                     <div class="ph" id="ddTitle">Page Inspector</div>
                     <div class="ps" id="ddUrl" style="color:var(--green)"></div>
-                    <div id="ddMeta" style="margin-top:6px;display:flex;gap:8px"></div>
+                    <div id="ddMeta" style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"></div>
                 </div>
 
+                <!-- TABS — Robots & Sitemap tab added -->
                 <div class="mod-tabs" id="modTabs">
                     <button class="mtab active" data-mod="meta">Metadata</button>
                     <button class="mtab" data-mod="headings">Headings</button>
@@ -197,20 +207,48 @@
                     <button class="mtab" data-mod="images">Images</button>
                     <button class="mtab" data-mod="links">Links</button>
                     <button class="mtab" data-mod="schema">Schema</button>
+                    <button class="mtab" data-mod="robots">Robots & Sitemap</button>
                     <button class="mtab" data-mod="ai">AI Radar</button>
                     <button class="mtab" data-mod="issues">Issues <span class="nbadge r" id="issueBadge">0</span></button>
                     <button class="mtab" data-mod="suggestions">AI Tips</button>
                 </div>
 
-                <!-- Mod Panes -->
+                <!-- ── META PANE — now complete with desc, SERP toggle, pixel bars ── -->
                 <div class="mpane active" id="mod-meta">
                     <div class="meta-grid">
-                        <div class="mfield">
-                            <div class="mfield-hd">Title Tag <span class="cc" id="titleCC">0 ch</span></div>
-                            <textarea id="metaTitle" rows="2" oninput="syncSerp()"></textarea>
-                            <div class="pxbar ok" id="titleBar"></div>
+                        <div>
+                            <!-- Title field -->
+                            <div class="mfield" style="margin-bottom:10px">
+                                <div class="mfield-hd">
+                                    Title Tag
+                                    <span class="cc" id="titleCC">0 ch</span>
+                                </div>
+                                <textarea id="metaTitle" rows="2" oninput="syncSerp()"></textarea>
+                                <div class="pxbar ok" id="titleBar"></div>
+                                <div style="padding:4px 12px 6px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+                                    Pixel width: <span id="titlePx">0 / 600px</span>
+                                </div>
+                            </div>
+                            <!-- Description field — was missing from HTML -->
+                            <div class="mfield">
+                                <div class="mfield-hd">
+                                    Meta Description
+                                    <span class="cc" id="descCC">0 ch</span>
+                                </div>
+                                <textarea id="metaDesc" rows="3" oninput="syncSerp()"></textarea>
+                                <div class="pxbar ok" id="descBar"></div>
+                                <div style="padding:4px 12px 6px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+                                    Pixel width: <span id="descPx">0 / 920px</span>
+                                </div>
+                            </div>
                         </div>
+                        <!-- SERP Preview — toggle buttons added -->
                         <div class="serp-box">
+                            <!-- serpToggle with stbtn buttons — were missing -->
+                            <div class="serp-toggle" id="serpToggle">
+                                <button class="stbtn active" onclick="serpMode('desktop')">Desktop</button>
+                                <button class="stbtn" onclick="serpMode('mobile')">Mobile</button>
+                            </div>
                             <div class="serp-preview" id="serpPreview">
                                 <div class="serp-site" id="serpSite"></div>
                                 <div class="serp-title" id="serpTitle">Page Title Here</div>
@@ -218,37 +256,94 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Pixel info row -->
+                    <div class="px-info" style="margin-top:8px">
+                        <span>Title: <span id="titlePxInfo" style="color:var(--text)">—</span></span>
+                        <span>Description: <span id="descPxInfo" style="color:var(--text)">—</span></span>
+                        <span style="color:var(--text3)">Optimal: Title ≤600px · Desc ≤920px</span>
+                    </div>
                 </div>
 
-                <div class="mpane" id="mod-headings"><div class="htree" id="headingTree"></div><div id="hViolations"></div></div>
+                <div class="mpane" id="mod-headings">
+                    <div class="htree" id="headingTree"></div>
+                    <div id="hViolations"></div>
+                </div>
+
                 <div class="mpane" id="mod-keywords"></div>
                 <div class="mpane" id="mod-readability"></div>
                 <div class="mpane" id="mod-images"></div>
                 <div class="mpane" id="mod-links"></div>
+
+                <!-- Schema pane — unchanged layout, schema-out class added for proper flex -->
                 <div class="mpane" id="mod-schema">
                     <div class="schema-layout">
-                        <select class="schema-sel" id="schemaType" onchange="buildSchemaFields()"></select>
-                        <div id="schemaFields"></div>
-                        <div class="schema-code" id="schemaCode"></div>
+                        <div>
+                            <select class="schema-sel" id="schemaType" onchange="buildSchemaFields()"></select>
+                            <div id="schemaFields"></div>
+                        </div>
+                        <div class="schema-out">
+                            <div class="schema-out-hd">
+                                <span>JSON-LD Output</span>
+                                <button class="copy-btn" onclick="copySchema()">Copy</button>
+                            </div>
+                            <div class="schema-code" id="schemaCode"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="mpane" id="mod-ai"></div>
+
+                <!-- ── ROBOTS & SITEMAP PANE — new, wires existing loadRobotsSitemap() ── -->
+                <div class="mpane" id="mod-robots"></div>
+
+                <!-- ── AI RADAR PANE — now has all required DOM nodes ── -->
+                <div class="mpane" id="mod-ai">
+                    <div class="ai-layout">
+                        <!-- Ring card — radarArc and aiNum are now present -->
+                        <div class="ai-ring-card">
+                            <div class="ai-ring">
+                                <svg width="100" height="100" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border2)" stroke-width="8"/>
+                                    <circle id="radarArc" cx="50" cy="50" r="42"
+                                        fill="none" stroke="var(--green)" stroke-width="8"
+                                        stroke-dasharray="264" stroke-dashoffset="264"
+                                        stroke-linecap="round"/>
+                                </svg>
+                                <div class="ai-score-num" id="aiNum" style="color:var(--green)">—</div>
+                            </div>
+                            <div class="ai-label">AI Visibility</div>
+                            <div class="ai-sub">Overall readiness score</div>
+                        </div>
+                        <!-- Metrics column — aiMetrics container now present -->
+                        <div class="ai-metrics" id="aiMetrics">
+                            <div class="grid-empty" style="font-size:11px">Run an audit to see AI metrics.</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mpane" id="mod-issues"></div>
                 <div class="mpane" id="mod-suggestions"></div>
             </div>
 
             <!-- ══ HISTORY PANEL ══ -->
             <div class="panel" id="panel-history">
-                <div class="ph">Audit History</div>
+                <div>
+                    <div class="ph">Audit History</div>
+                    <div class="ps">Stored locally · max 50 entries · never leaves your browser</div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+                    <button class="exp-btn" onclick="clearAllHistory()" style="font-size:11px;padding:6px 12px">Clear All</button>
+                </div>
                 <div class="history-list" id="historyList"></div>
             </div>
 
             <!-- ══ COMPARE PANEL ══ -->
             <div class="panel" id="panel-compare">
-                <div class="ph">Compare Audits</div>
+                <div>
+                    <div class="ph">Compare Audits</div>
+                    <div class="ps">Select two history entries to compare performance</div>
+                </div>
                 <div class="card row">
-                    <select id="compareA" class="schema-sel"></select>
-                    <select id="compareB" class="schema-sel"></select>
+                    <select id="compareA" class="schema-sel" style="flex:1"></select>
+                    <select id="compareB" class="schema-sel" style="flex:1"></select>
                     <button class="exec-btn" onclick="runComparison()">Compare</button>
                 </div>
                 <div id="compareResult"></div>
