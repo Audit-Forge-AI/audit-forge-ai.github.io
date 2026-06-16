@@ -1675,3 +1675,1757 @@ document.querySelectorAll('.nav-item').forEach(item=>{
 $('navPaste') && $('navPaste').addEventListener('click',()=>showPanel('paste'));
 buildSchemaFields();
 syncSerp();
+/* ════════════════════════════════════════════════
+   AuditForge AI Pro — JS ADDITIONS
+   Append to end of services.js
+   All features extend existing functions safely.
+   ════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════
+   NAMESPACE
+   ══════════════════════════════════════ */
+window.AuditForge = window.AuditForge || {};
+
+/* ══════════════════════════════════════
+   FIX: navPaste navigation
+   Replace the broken showPanel('paste') behavior
+   ══════════════════════════════════════ */
+(function fixNavPaste() {
+  const nav = $('navPaste');
+  if (!nav) return;
+  // Remove all existing listeners by cloning
+  const fresh = nav.cloneNode(true);
+  nav.parentNode.replaceChild(fresh, nav);
+  fresh.addEventListener('click', () => {
+    setMode('paste');
+    showPanel('crawler');
+    if (window.innerWidth <= 768) closeSidebar();
+  });
+})();
+
+/* ══════════════════════════════════════
+   EXTEND: analyzePage()
+   Safe wrapper that adds new fields
+   without touching the original function.
+   Called by _analyzePageExtended() which
+   replaces only the crawl call site.
+   ══════════════════════════════════════ */
+function _extendPageAnalysis(result, html, url) {
+  if (!result || !html) return result;
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const bodyText = result.bodyText || '';
+
+    // ── Social / OG tags ──
+    function getMeta(selectors) {
+      for (const sel of selectors) {
+        const el = doc.querySelector(sel);
+        if (el) {
+          return el.getAttribute('content') || el.getAttribute('href') || '';
+        }
+      }
+      return '';
+    }
+    result.ogTitle    = getMeta(['meta[property="og:title"]']);
+    result.ogDesc     = getMeta(['meta[property="og:description"]']);
+    result.ogImage    = getMeta(['meta[property="og:image"]']);
+    result.ogType     = getMeta(['meta[property="og:type"]']);
+    result.ogUrl      = getMeta(['meta[property="og:url"]']);
+    result.twitterCard  = getMeta(['meta[name="twitter:card"]']);
+    result.twitterTitle = getMeta(['meta[name="twitter:title"]']);
+    result.twitterImage = getMeta(['meta[name="twitter:image"]']);
+    result.hasSocialTags = !!(result.ogTitle || result.ogDesc || result.twitterCard);
+
+    // ── Accessibility signals ──
+    result.hasLangAttr   = !!doc.querySelector('html[lang]');
+    result.hasSkipLink   = !!doc.querySelector('a[href="#main"],a[href="#content"],a[href="#skip"]');
+    result.ariaLandmarks = doc.querySelectorAll('[role="main"],[role="navigation"],[role="banner"],[role="contentinfo"]').length;
+    result.labelledInputs = doc.querySelectorAll('input[aria-label],input[id]').length;
+    result.totalInputs   = doc.querySelectorAll('input:not([type="hidden"])').length;
+    result.tabIndex      = doc.querySelectorAll('[tabindex]').length;
+    result.contrastIssues = 0; // Cannot compute in browser without rendering
+
+    // ── FAQ detection ──
+    let faqCount = 0;
+    // FAQPage schema
+    doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+      try {
+        const j = JSON.parse(s.textContent || '');
+        const type = (j['@type'] || (Array.isArray(j['@graph']) ? j['@graph'].find(x => x['@type'] === 'FAQPage')?.['@type'] : ''));
+        if (/FAQPage/i.test(type)) faqCount += 5;
+        if (j.mainEntity && Array.isArray(j.mainEntity)) faqCount += j.mainEntity.length;
+      } catch(e) {}
+    });
+    // Question headings
+    const qHeadings = [...doc.querySelectorAll('h2,h3,h4')].filter(h => /\?$/.test(h.textContent.trim()));
+    faqCount += qHeadings.length;
+    // Question sentences in body text
+    const questionSentences = (bodyText.match(/[A-Z][^.!?]*\?/g) || []).length;
+    faqCount += Math.floor(questionSentences / 2);
+    result.faqCount = Math.min(faqCount, 20);
+
+    // ── Entity detection ──
+    // Consecutive capitalized words (naive NER heuristic)
+    const entityMatches = bodyText.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g) || [];
+    const entitySet = new Set(entityMatches.filter(e => e.length > 4 && e.split(' ').length >= 2));
+    result.entityCount = Math.min(entitySet.size, 30);
+    result.topEntities = [...entitySet].slice(0, 10);
+
+    // ── Definition detection ──
+    const defPatterns = [
+      /\b\w[\w\s]{2,30}\s+is\s+(?:a|an|the)\s+/gi,
+      /\bdefined as\b/gi,
+      /\brefers to\b/gi,
+      /\bknown as\b/gi,
+      /\bmeans\b.{5,60}(?:\.|,)/gi
+    ];
+    let definitionCount = 0;
+    defPatterns.forEach(p => {
+      definitionCount += (bodyText.match(p) || []).length;
+    });
+    result.definitionCount = Math.min(definitionCount, 15);
+
+    // ── Knowledge chunk detection ──
+    // Short explanatory paragraphs (50–300 words) that likely answer a question
+    const paras = [...doc.querySelectorAll('p')].filter(p => {
+      const wc = (p.textContent || '').split(/\s+/).filter(Boolean).length;
+      return wc >= 15 && wc <= 120;
+    });
+    const stepLists = [...doc.querySelectorAll('ol')].length;
+    result.knowledgeChunkCount = Math.min(paras.length + stepLists * 2, 20);
+    result.paragraphCount = doc.querySelectorAll('p').length;
+    const allParas = [...doc.querySelectorAll('p')].map(p => (p.textContent||'').split(/\s+/).filter(Boolean).length);
+    result.avgParagraphLength = allParas.length ? Math.round(allParas.reduce((a,b)=>a+b,0)/allParas.length) : 0;
+
+    // ── Conversational intent detection ──
+    const convPatterns = /\b(how|why|what|when|where|who|can|should|does|is|are|will|which)\b/gi;
+    const convMatches = bodyText.match(convPatterns) || [];
+    result.conversationIntentCount = Math.min(convMatches.length, 40);
+
+    // ── Citation detection ──
+    const blockquotes = doc.querySelectorAll('blockquote').length;
+    const cites = doc.querySelectorAll('cite').length;
+    const refLinks = [...doc.querySelectorAll('a')].filter(a =>
+      /source|reference|cite|study|research|according/i.test(a.textContent) ||
+      /\[\d+\]/.test(a.textContent)
+    ).length;
+    result.citationCount = Math.min(blockquotes + cites + refLinks, 15);
+
+    // ── List / Table density ──
+    const totalWords = result.wordCount || 1;
+    const listItems = doc.querySelectorAll('li').length;
+    result.listDensity = Math.min(100, Math.round((listItems / (totalWords / 100)) * 10));
+    result.tableDensity = Math.min(100, (result.hasTables || 0) * 25);
+
+    // ── AI Signals composite ──
+    result.aiSignals = {
+      hasFAQ:         result.faqCount > 2,
+      hasEntities:    result.entityCount > 3,
+      hasDefinitions: result.definitionCount > 1,
+      hasChunks:      result.knowledgeChunkCount > 2,
+      hasConversational: result.conversationIntentCount > 5,
+      hasCitations:   result.citationCount > 0,
+      hasSchema:      !!(result.hasSchema),
+      hasSemantics:   !!(result.hasSemantic),
+      hasStructuredLists: !!(result.hasLists),
+      hasTables:      !!(result.hasTables)
+    };
+
+    // ── AI Metrics per dimension (0–100) ──
+    result.aiMetrics = {
+      faq:            Math.min(100, result.faqCount * 15),
+      entities:       Math.min(100, result.entityCount * 4),
+      definitions:    Math.min(100, result.definitionCount * 10),
+      chunks:         Math.min(100, result.knowledgeChunkCount * 7),
+      conversational: Math.min(100, Math.round((result.conversationIntentCount / 40) * 100)),
+      citations:      Math.min(100, result.citationCount * 10),
+      schema:         result.hasSchema ? 90 : 5,
+      semantics:      Math.min(100, (result.hasSemantic || 0) * 20)
+    };
+
+    // ── Real AI Score (transparent weighted calculation) ──
+    const m = result.aiMetrics;
+    result.realAIScore = Math.min(100, Math.round(
+      m.faq          * 0.18 +
+      m.entities     * 0.14 +
+      m.definitions  * 0.12 +
+      m.chunks       * 0.15 +
+      m.conversational * 0.12 +
+      m.citations    * 0.08 +
+      m.schema       * 0.12 +
+      m.semantics    * 0.09
+    ));
+
+    // ── Intent coverage ──
+    const informational = (bodyText.match(/\b(how|what|why|explain|guide|tutorial|learn)\b/gi) || []).length;
+    const navigational  = (bodyText.match(/\b(login|sign in|download|get started|contact|home)\b/gi) || []).length;
+    const commercial    = (bodyText.match(/\b(best|top|review|compare|vs|alternative|price)\b/gi) || []).length;
+    const transactional = (bodyText.match(/\b(buy|purchase|order|checkout|subscribe|free trial|get)\b/gi) || []).length;
+    const intentTotal   = Math.max(1, informational + navigational + commercial + transactional);
+    result.intentCoverage = {
+      informational: Math.min(100, Math.round((informational / intentTotal) * 100)),
+      navigational:  Math.min(100, Math.round((navigational  / intentTotal) * 100)),
+      commercial:    Math.min(100, Math.round((commercial    / intentTotal) * 100)),
+      transactional: Math.min(100, Math.round((transactional / intentTotal) * 100))
+    };
+
+    // ── Schema type detection ──
+    result.schemaTypes = [];
+    doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+      try {
+        const j = JSON.parse(s.textContent || '');
+        const t = j['@type'];
+        if (t) result.schemaTypes.push(Array.isArray(t) ? t : [t]);
+        if (j['@graph']) {
+          j['@graph'].forEach(n => { if (n['@type']) result.schemaTypes.push(n['@type']); });
+        }
+      } catch(e) {}
+    });
+    result.schemaTypes = [...new Set(result.schemaTypes.flat())];
+    result.hasFAQSchema       = result.schemaTypes.includes('FAQPage');
+    result.hasOrgSchema       = result.schemaTypes.some(t => /Organization|LocalBusiness/i.test(t));
+    result.hasArticleSchema   = result.schemaTypes.some(t => /Article|BlogPosting|NewsArticle/i.test(t));
+    result.hasProductSchema   = result.schemaTypes.some(t => /Product/i.test(t));
+    result.hasBreadcrumbSchema = result.schemaTypes.some(t => /BreadcrumbList/i.test(t));
+
+  } catch(e) {
+    console.warn('AuditForge: _extendPageAnalysis error', e);
+  }
+  return result;
+}
+
+/* ══════════════════════════════════════
+   HOOK INTO CRAWL
+   Monkey-patch _processPastedHTML and
+   the crawl engine's analyzePage call
+   by wrapping the global at parse-time.
+   We can't modify crawl() directly, so
+   we replace analyzePage globally with
+   a version that auto-extends results.
+   ══════════════════════════════════════ */
+(function hookAnalyzePage() {
+  const _orig = window.analyzePage || analyzePage;
+  // Override in global scope
+  window._analyzePageOriginal = _orig;
+  // We shadow the function name by reassigning on window:
+  window.analyzePage = function(html, url) {
+    const result = _orig(html, url);
+    return _extendPageAnalysis(result, html, url);
+  };
+  // Since services.js uses the local `analyzePage` binding (not window.analyzePage),
+  // we need a different approach: store extension data on a side-channel
+  // keyed by page ID, populated during _processPastedHTML override.
+})();
+
+/* Because crawl() uses its local binding of analyzePage() we cannot
+   monkey-patch it. Instead, we post-process pages after crawl completes
+   by hooking the saveToHistory call timing via a MutationObserver on the
+   grid, or by overriding _processPastedHTML. For paste audits we can
+   safely wrap. For crawled pages we extend in openInspector(). */
+
+// Extension cache: html content keyed by page id is not stored (too large).
+// Instead, extend the page object with defaults if missing, and run
+// the pattern-matching analysis against what we do have (bodyText).
+function _ensureExtended(pg) {
+  if (pg._extended) return pg;
+  try {
+    // Run text-based analysis only (no full HTML re-parse for crawled pages)
+    const bodyText = pg.bodyText || '';
+
+    if (pg.faqCount === undefined) {
+      const qSentences = (bodyText.match(/[A-Z][^.!?]*\?/g) || []).length;
+      pg.faqCount = Math.min(Math.floor(qSentences / 2), 10);
+    }
+    if (pg.entityCount === undefined) {
+      const entityMatches = bodyText.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g) || [];
+      pg.entityCount = Math.min(new Set(entityMatches).size, 20);
+      pg.topEntities = [...new Set(entityMatches)].slice(0, 8);
+    }
+    if (pg.definitionCount === undefined) {
+      const defPat = /\b(?:is a|is an|refers to|defined as|known as)\b/gi;
+      pg.definitionCount = Math.min((bodyText.match(defPat) || []).length, 10);
+    }
+    if (pg.knowledgeChunkCount === undefined) {
+      // Approximate from word count and structure signals
+      pg.knowledgeChunkCount = Math.min(
+        Math.floor((pg.wordCount || 0) / 80) + (pg.hasLists ? 2 : 0),
+        15
+      );
+    }
+    if (pg.conversationIntentCount === undefined) {
+      const convPat = /\b(how|why|what|when|where|who|can|should)\b/gi;
+      pg.conversationIntentCount = Math.min((bodyText.match(convPat) || []).length, 30);
+    }
+    if (pg.citationCount === undefined) {
+      pg.citationCount = 0;
+    }
+    if (!pg.aiMetrics) {
+      pg.aiMetrics = {
+        faq:            Math.min(100, pg.faqCount * 15),
+        entities:       Math.min(100, pg.entityCount * 4),
+        definitions:    Math.min(100, pg.definitionCount * 10),
+        chunks:         Math.min(100, pg.knowledgeChunkCount * 7),
+        conversational: Math.min(100, Math.round((pg.conversationIntentCount / 30) * 100)),
+        citations:      Math.min(100, pg.citationCount * 10),
+        schema:         pg.hasSchema ? 90 : 5,
+        semantics:      Math.min(100, (pg.hasSemantic || 0) * 20)
+      };
+    }
+    if (pg.realAIScore === undefined) {
+      const m = pg.aiMetrics;
+      pg.realAIScore = Math.min(100, Math.round(
+        m.faq * 0.18 + m.entities * 0.14 + m.definitions * 0.12 +
+        m.chunks * 0.15 + m.conversational * 0.12 + m.citations * 0.08 +
+        m.schema * 0.12 + m.semantics * 0.09
+      ));
+    }
+    if (!pg.intentCoverage) {
+      const inf = (bodyText.match(/\b(how|what|why|explain|guide|learn)\b/gi) || []).length;
+      const nav = (bodyText.match(/\b(login|download|contact|home)\b/gi) || []).length;
+      const com = (bodyText.match(/\b(best|top|review|compare|price)\b/gi) || []).length;
+      const tra = (bodyText.match(/\b(buy|purchase|order|subscribe)\b/gi) || []).length;
+      const tot = Math.max(1, inf+nav+com+tra);
+      pg.intentCoverage = {
+        informational: Math.min(100, Math.round(inf/tot*100)),
+        navigational:  Math.min(100, Math.round(nav/tot*100)),
+        commercial:    Math.min(100, Math.round(com/tot*100)),
+        transactional: Math.min(100, Math.round(tra/tot*100))
+      };
+    }
+    if (!pg.schemaTypes) pg.schemaTypes = [];
+    if (pg.hasFAQSchema    === undefined) pg.hasFAQSchema    = false;
+    if (pg.hasOrgSchema    === undefined) pg.hasOrgSchema    = false;
+    if (pg.hasArticleSchema === undefined) pg.hasArticleSchema = false;
+    if (!pg.aiSignals) {
+      pg.aiSignals = {
+        hasFAQ:         pg.faqCount > 2,
+        hasEntities:    pg.entityCount > 3,
+        hasDefinitions: pg.definitionCount > 1,
+        hasChunks:      pg.knowledgeChunkCount > 2,
+        hasConversational: pg.conversationIntentCount > 5,
+        hasCitations:   pg.citationCount > 0,
+        hasSchema:      !!(pg.hasSchema),
+        hasSemantics:   !!(pg.hasSemantic)
+      };
+    }
+    if (!pg.hasSocialTags) pg.hasSocialTags = !!(pg.ogTitle || pg.twitterCard);
+    if (!pg.ogTitle) pg.ogTitle = '';
+    if (!pg.ogDesc) pg.ogDesc = '';
+    if (!pg.ogImage) pg.ogImage = '';
+    if (!pg.twitterCard) pg.twitterCard = '';
+    if (pg.hasLangAttr === undefined) pg.hasLangAttr = false;
+    if (!pg.ariaLandmarks) pg.ariaLandmarks = 0;
+  } catch(e) {}
+  pg._extended = true;
+  return pg;
+}
+
+/* ══════════════════════════════════════
+   SCORE ENGINE V2
+   AuditForge.scores
+   ══════════════════════════════════════ */
+AuditForge.scores = {
+
+  compute(pg) {
+    if (!pg) return null;
+    _ensureExtended(pg);
+
+    const deductions = {};
+
+    // ── Technical SEO ──
+    let tech = 100;
+    const techD = [];
+    if (!pg.title)                  { tech -= 18; techD.push({l:'Missing title tag',          v:-18}); }
+    else if (pg.title.length > 60)  { tech -= 6;  techD.push({l:'Title too long ('+pg.title.length+' ch)', v:-6}); }
+    else if (pg.title.length < 10)  { tech -= 8;  techD.push({l:'Title too short',             v:-8}); }
+    if (!pg.desc)                   { tech -= 12; techD.push({l:'Missing meta description',    v:-12}); }
+    else if (pg.desc.length > 160)  { tech -= 4;  techD.push({l:'Description too long',        v:-4}); }
+    if (!pg.h1s || !pg.h1s.length) { tech -= 14; techD.push({l:'No H1 tag',                   v:-14}); }
+    if (pg.h1s && pg.h1s.length>1) { tech -= 8;  techD.push({l:'Multiple H1 tags ('+pg.h1s.length+')', v:-8}); }
+    if (pg.robots && /noindex/i.test(pg.robots)) { tech -= 15; techD.push({l:'Noindex directive set', v:-15}); }
+    if (!pg.canonical)              { tech -= 5;  techD.push({l:'No canonical tag',             v:-5}); }
+    if (pg.url && pg.url.startsWith('http:')) { tech -= 10; techD.push({l:'Not HTTPS',          v:-10}); }
+    if (window._lastRobots && !window._lastRobots.found) { tech -= 5; techD.push({l:'robots.txt missing', v:-5}); }
+    if (window._lastSitemap && !window._lastSitemap.found) { tech -= 5; techD.push({l:'sitemap.xml missing', v:-5}); }
+    deductions.technical = techD;
+    const technicalSEO = Math.max(0, Math.min(100, tech));
+
+    // ── Content Quality ──
+    let content = 100;
+    const contentD = [];
+    const wc = pg.wordCount || 0;
+    if (wc < 100)        { content -= 25; contentD.push({l:'Very thin content (<100 words)',  v:-25}); }
+    else if (wc < 300)   { content -= 15; contentD.push({l:'Thin content (<300 words)',       v:-15}); }
+    else if (wc < 600)   { content -= 5;  contentD.push({l:'Moderate content (<600 words)',    v:-5}); }
+    if (!pg.headingNodes || pg.headingNodes.length < 2) { content -= 10; contentD.push({l:'Too few headings',  v:-10}); }
+    if (!pg.hasLists)    { content -= 5;  contentD.push({l:'No lists for scannability',       v:-5}); }
+    if (pg.readability) {
+      if (pg.readability.flesch < 30)       { content -= 12; contentD.push({l:'Very hard to read',  v:-12}); }
+      else if (pg.readability.flesch < 50)  { content -= 6;  contentD.push({l:'Difficult readability', v:-6}); }
+      if (pg.readability.avgSentenceLength > 35) { content -= 5; contentD.push({l:'Very long sentences', v:-5}); }
+    }
+    if (!pg.faqCount || pg.faqCount < 2)    { content -= 8;  contentD.push({l:'No FAQ content detected',  v:-8}); }
+    if (pg.definitionCount < 1)             { content -= 5;  contentD.push({l:'No definitions found',      v:-5}); }
+    deductions.content = contentD;
+    const contentQuality = Math.max(0, Math.min(100, content));
+
+    // ── Accessibility ──
+    let a11y = 100;
+    const a11yD = [];
+    if (pg.missingAlt > 0)    { const p = Math.min(20, pg.missingAlt*3); a11y -= p; a11yD.push({l:pg.missingAlt+' image(s) missing alt', v:-p}); }
+    if (!pg.hasLangAttr)      { a11y -= 8;  a11yD.push({l:'No lang attribute on <html>',   v:-8}); }
+    if (!pg.hasSemantic)      { a11y -= 10; a11yD.push({l:'No semantic HTML landmarks',     v:-10}); }
+    if (pg.ariaLandmarks < 2) { a11y -= 5;  a11yD.push({l:'Insufficient ARIA landmarks',   v:-5}); }
+    // Heading hierarchy violations
+    let prevLv = 0, skipCount = 0;
+    (pg.headingNodes || []).forEach(h => {
+      const lv = parseInt(h.tag[1]);
+      if (lv > prevLv + 1 && prevLv > 0) skipCount++;
+      prevLv = lv;
+    });
+    if (skipCount > 0) { a11y -= skipCount * 4; a11yD.push({l:skipCount+' heading level skip(s)', v:-(skipCount*4)}); }
+    if (pg.totalInputs > 0 && pg.labelledInputs < pg.totalInputs) {
+      const u = pg.totalInputs - pg.labelledInputs;
+      a11y -= Math.min(10, u * 3);
+      a11yD.push({l:u+' input(s) without label', v:-(Math.min(10,u*3))});
+    }
+    deductions.accessibility = a11yD;
+    const accessibility = Math.max(0, Math.min(100, a11y));
+
+    // ── Schema Health ──
+    let schema = 0;
+    const schemaD = [];
+    if (pg.hasSchema) {
+      schema += 40;
+      schemaD.push({l:'Structured data present', v:+40});
+    } else {
+      schemaD.push({l:'No JSON-LD schema found', v:0});
+    }
+    if (pg.hasFAQSchema)       { schema += 20; schemaD.push({l:'FAQPage schema',        v:+20}); }
+    if (pg.hasOrgSchema)       { schema += 15; schemaD.push({l:'Organization schema',   v:+15}); }
+    if (pg.hasArticleSchema)   { schema += 15; schemaD.push({l:'Article schema',        v:+15}); }
+    if (pg.hasBreadcrumbSchema){ schema += 10; schemaD.push({l:'BreadcrumbList schema', v:+10}); }
+    if (!pg.hasFAQSchema)      { schemaD.push({l:'Missing FAQPage schema', v:0}); }
+    if (!pg.hasOrgSchema && !pg.hasArticleSchema) { schemaD.push({l:'No Organization/Article schema', v:0}); }
+    deductions.schema = schemaD;
+    const schemaHealth = Math.min(100, schema);
+
+    // ── Social Optimization ──
+    let social = 100;
+    const socialD = [];
+    if (!pg.ogTitle)      { social -= 20; socialD.push({l:'Missing og:title',        v:-20}); }
+    if (!pg.ogDesc)       { social -= 15; socialD.push({l:'Missing og:description',  v:-15}); }
+    if (!pg.ogImage)      { social -= 20; socialD.push({l:'Missing og:image',        v:-20}); }
+    if (!pg.ogType)       { social -= 10; socialD.push({l:'Missing og:type',         v:-10}); }
+    if (!pg.twitterCard)  { social -= 15; socialD.push({l:'Missing twitter:card',    v:-15}); }
+    if (!pg.twitterImage) { social -= 10; socialD.push({l:'Missing twitter:image',   v:-10}); }
+    deductions.social = socialD;
+    const socialOptimization = Math.max(0, Math.min(100, social));
+
+    // ── AI Visibility ──
+    const aiVisibility = pg.realAIScore || pg.aiScore || 0;
+    const aiD = [];
+    const am = pg.aiMetrics || {};
+    if ((am.faq || 0) < 30)            { aiD.push({l:'Low FAQ coverage',          v: am.faq - 30}); }
+    if ((am.entities || 0) < 40)       { aiD.push({l:'Weak entity signals',       v: am.entities - 40}); }
+    if ((am.schema || 0) < 50)         { aiD.push({l:'No structured data',        v: am.schema - 50}); }
+    if ((am.conversational || 0) < 40) { aiD.push({l:'Low conversational intent', v: am.conversational - 40}); }
+    deductions.ai = aiD;
+
+    // ── Overall (weighted) ──
+    const overall = Math.round(
+      technicalSEO    * 0.25 +
+      contentQuality  * 0.20 +
+      accessibility   * 0.15 +
+      schemaHealth    * 0.15 +
+      socialOptimization * 0.10 +
+      aiVisibility    * 0.15
+    );
+
+    return {
+      technicalSEO,
+      contentQuality,
+      accessibility,
+      schemaHealth,
+      socialOptimization,
+      aiVisibility,
+      overall,
+      deductions
+    };
+  },
+
+  colorFor(score) {
+    if (score >= 80) return 'var(--green)';
+    if (score >= 55) return 'var(--amber)';
+    return 'var(--red)';
+  },
+
+  labelFor(score) {
+    if (score >= 80) return 'Good';
+    if (score >= 55) return 'Needs Work';
+    return 'Poor';
+  }
+};
+
+/* ══════════════════════════════════════
+   AI RADAR — loadAI() replacement
+   Hooks into existing DOM nodes:
+   radarArc, aiNum, aiMetrics
+   ══════════════════════════════════════ */
+(function replaceLoadAI() {
+  window.loadAI = function(pg) {
+    if (!pg) return;
+    _ensureExtended(pg);
+
+    const score = pg.realAIScore !== undefined ? pg.realAIScore : (pg.aiScore || 0);
+    const color = score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
+
+    // Animate ring (existing SVG nodes)
+    const arc = $('radarArc');
+    if (arc) {
+      arc.style.stroke = color;
+      setTimeout(() => {
+        arc.style.strokeDashoffset = String(264 - (score / 100) * 264);
+      }, 80);
+    }
+    const num = $('aiNum');
+    if (num) {
+      num.textContent = score;
+      num.style.color = color;
+    }
+
+    // Metrics container
+    const wrap = $('aiMetrics');
+    if (!wrap) return;
+
+    const m = pg.aiMetrics || {};
+    const metricDefs = [
+      { key: 'faq',            label: 'FAQ Coverage',          icon: '❓', hint: 'Questions + answers detected' },
+      { key: 'entities',       label: 'Entity Signals',        icon: '🏷',  hint: 'Named entities found' },
+      { key: 'definitions',    label: 'Definitions',           icon: '📖', hint: 'Definition patterns' },
+      { key: 'chunks',         label: 'Knowledge Chunks',      icon: '🧠', hint: 'Quote-ready sections' },
+      { key: 'conversational', label: 'Conversational Intent', icon: '💬', hint: 'How/Why/What/When coverage' },
+      { key: 'citations',      label: 'Citations & Sources',   icon: '🔗', hint: 'Blockquotes & cite elements' },
+      { key: 'schema',         label: 'Structured Data',       icon: '📋', hint: 'JSON-LD schema presence' },
+      { key: 'semantics',      label: 'Semantic HTML',         icon: '🏗',  hint: 'Landmark elements' }
+    ];
+
+    const metricsHtml = metricDefs.map(def => {
+      const val = m[def.key] || 0;
+      const cls = val >= 70 ? 'hi' : val >= 40 ? 'mi' : 'lo';
+      const fillColor = val >= 70 ? 'var(--green)' : val >= 40 ? 'var(--amber)' : 'var(--red)';
+      return `<div class="ai-metric-card" title="${def.hint}">
+        <div class="ai-metric-name">${def.icon} ${def.label}</div>
+        <div class="ai-metric-val" style="color:${fillColor}">${val}<span style="font-size:13px;color:var(--text3)">/100</span></div>
+        <div class="ai-metric-bar">
+          <div class="ai-metric-fill afill ${cls}" style="width:0;background:${fillColor}" data-t="${val}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Strengths and weaknesses
+    const strengths = metricDefs.filter(d => (m[d.key] || 0) >= 60).map(d => d.label);
+    const weaknesses = metricDefs.filter(d => (m[d.key] || 0) < 40).map(d => d.label);
+
+    // Intent coverage
+    const ic = pg.intentCoverage || { informational:0, navigational:0, commercial:0, transactional:0 };
+    const intentHtml = `
+      <div class="sec-title" style="margin-top:14px;margin-bottom:8px">Conversational Intent Coverage</div>
+      <div class="ai-intent-grid">
+        ${[
+          {l:'Informational', v:ic.informational, c:'var(--green)'},
+          {l:'Navigational',  v:ic.navigational,  c:'var(--blue)'},
+          {l:'Commercial',    v:ic.commercial,     c:'var(--amber)'},
+          {l:'Transactional', v:ic.transactional,  c:'var(--purple)'}
+        ].map(i=>`<div class="ai-intent-card">
+          <div class="ai-intent-label">${i.l}</div>
+          <div class="ai-intent-score" style="color:${i.c}">${i.v}%</div>
+        </div>`).join('')}
+      </div>`;
+
+    // Signals
+    const signals = pg.aiSignals || {};
+    const signalItems = [
+      { ok: signals.hasFAQ,           label: 'FAQ / Q&A content',         gain: '+FAQ visibility' },
+      { ok: signals.hasEntities,      label: 'Named entity signals',       gain: '+Entity recognition' },
+      { ok: signals.hasDefinitions,   label: 'Definition patterns',        gain: '+Definition extraction' },
+      { ok: signals.hasChunks,        label: 'Answer-ready paragraphs',    gain: '+AI citation potential' },
+      { ok: signals.hasConversational,label: 'Conversational intent',      gain: '+Prompt matching' },
+      { ok: signals.hasCitations,     label: 'Citations & references',     gain: '+Source credibility' },
+      { ok: signals.hasSchema,        label: 'Structured data (JSON-LD)',  gain: '+Rich results' },
+      { ok: signals.hasSemantics,     label: 'Semantic HTML landmarks',    gain: '+Crawler understanding' },
+    ].map(s => `<div class="ai-signal-item">
+      <span class="ai-signal-ico">${s.ok ? '✅' : '❌'}</span>
+      <span class="ai-signal-text">${s.label}</span>
+      <span class="ai-signal-score" style="color:${s.ok?'var(--green)':'var(--red)'}">${s.ok ? s.gain : '—'}</span>
+    </div>`).join('');
+
+    // Entity list
+    const entityHtml = pg.topEntities && pg.topEntities.length
+      ? `<div class="sec-title" style="margin-top:14px;margin-bottom:6px">Detected Entities</div>
+         <div style="display:flex;flex-wrap:wrap;gap:6px">${
+           pg.topEntities.map(e => `<span style="background:var(--blue-dim);border:1px solid rgba(59,130,246,.2);color:var(--blue);padding:2px 8px;border-radius:10px;font-family:var(--mono);font-size:10px;font-weight:700">${e}</span>`).join('')
+         }</div>`
+      : '';
+
+    wrap.innerHTML = `
+      <div class="ai-metric-grid" id="aiMetricGrid">${metricsHtml}</div>
+      ${strengths.length ? `<div style="margin-top:10px;padding:8px 12px;background:var(--green-dim);border:1px solid rgba(16,185,129,.2);border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--green)">
+        ✓ Strengths: ${strengths.join(', ')}
+      </div>` : ''}
+      ${weaknesses.length ? `<div style="margin-top:6px;padding:8px 12px;background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--red)">
+        ✗ Needs improvement: ${weaknesses.join(', ')}
+      </div>` : ''}
+      <div class="sec-title" style="margin-top:14px;margin-bottom:8px">AI Readiness Signals</div>
+      <div class="ai-signal-list">${signalItems}</div>
+      ${intentHtml}
+      ${entityHtml}
+    `;
+
+    // Animate bars
+    setTimeout(() => {
+      wrap.querySelectorAll('.afill').forEach(f => {
+        f.style.width = f.dataset.t || '0%';
+      });
+    }, 100);
+  };
+})();
+
+/* ══════════════════════════════════════
+   ROBOTS INTELLIGENCE ENGINE
+   AuditForge.robots
+   Extends window._lastRobots, does NOT
+   replace fetchRobotsTxt()
+   ══════════════════════════════════════ */
+AuditForge.robots = {
+
+  parse(content) {
+    if (!content) return { agents: {}, sitemaps: [], errors: [] };
+    const lines = content.split('\n').map(l => l.trim());
+    const agents = {};
+    let currentAgent = null;
+    const sitemaps = [];
+    const errors = [];
+    const seen = {};
+
+    lines.forEach((line, i) => {
+      if (!line || line.startsWith('#')) return;
+      const colonIdx = line.indexOf(':');
+      if (colonIdx < 0) { errors.push(`Line ${i+1}: Invalid syntax — "${line}"`); return; }
+
+      const key   = line.slice(0, colonIdx).trim().toLowerCase();
+      const value = line.slice(colonIdx + 1).trim();
+
+      if (key === 'user-agent') {
+        currentAgent = value;
+        if (!agents[currentAgent]) agents[currentAgent] = { disallow: [], allow: [], crawlDelay: null };
+      } else if (key === 'disallow' && currentAgent) {
+        const sig = `disallow:${currentAgent}:${value}`;
+        if (seen[sig]) errors.push(`Duplicate Disallow: "${value}" for ${currentAgent}`);
+        seen[sig] = true;
+        agents[currentAgent].disallow.push(value);
+      } else if (key === 'allow' && currentAgent) {
+        agents[currentAgent].allow.push(value);
+      } else if (key === 'crawl-delay' && currentAgent) {
+        agents[currentAgent].crawlDelay = parseFloat(value);
+      } else if (key === 'sitemap') {
+        sitemaps.push(value);
+      }
+    });
+
+    return { agents, sitemaps, errors };
+  },
+
+  analyze(robotsData) {
+    const issues = [];
+    const content = (robotsData && robotsData.content) || '';
+    const parsed = this.parse(content);
+    const { agents, sitemaps, errors } = parsed;
+
+    if (!robotsData || !robotsData.found) {
+      issues.push({
+        severity: 'critical',
+        ico: '🔴',
+        title: 'robots.txt Missing',
+        detail: 'No robots.txt found at domain root. Search engines may crawl everything including unwanted paths.',
+        why: 'robots.txt is the primary mechanism to control crawler access and declare sitemaps.',
+        gain: '+8 Technical SEO'
+      });
+      return { issues, score: 20, parsed };
+    }
+
+    // Syntax errors
+    errors.forEach(err => {
+      issues.push({
+        severity: 'warning',
+        ico: '🟡',
+        title: 'Syntax Issue in robots.txt',
+        detail: err,
+        why: 'Malformed robots.txt directives may be ignored by crawlers.',
+        gain: '+3 Technical SEO'
+      });
+    });
+
+    const allAgents = agents['*'] || { disallow: [], allow: [], crawlDelay: null };
+
+    // Disallow all
+    if (allAgents.disallow.includes('/')) {
+      issues.push({
+        severity: 'critical',
+        ico: '🔴',
+        title: 'Disallow: / — Site Completely Blocked',
+        detail: 'User-agent: * has Disallow: / which blocks ALL search engine crawling.',
+        why: 'This single directive prevents Google, Bing, and all bots from indexing your site.',
+        gain: '+25 Technical SEO'
+      });
+    }
+
+    // Wildcard detection
+    const hasWildcard = Object.keys(agents).includes('*');
+    if (!hasWildcard) {
+      issues.push({
+        severity: 'opportunity',
+        ico: '🔵',
+        title: 'No Universal User-Agent Rule',
+        detail: 'No "User-agent: *" block found. Rules only apply to explicitly named bots.',
+        why: 'Without a wildcard block, unrecognized crawlers are unconstrained.',
+        gain: '+3 Technical SEO'
+      });
+    } else {
+      issues.push({ severity: 'passed', ico: '✅', title: 'Universal User-Agent Block Present', detail: 'User-agent: * block found.', why: '', gain: '' });
+    }
+
+    // CSS blocking
+    const cssBlocked = allAgents.disallow.some(p => /\.css|\/css\//i.test(p));
+    if (cssBlocked) {
+      issues.push({
+        severity: 'critical',
+        ico: '🔴',
+        title: 'CSS Files Blocked from Crawlers',
+        detail: 'A Disallow rule is preventing crawlers from accessing CSS files.',
+        why: 'Google needs CSS to render pages for indexing. Blocking it hurts rankings.',
+        gain: '+10 Technical SEO'
+      });
+    }
+
+    // JS blocking
+    const jsBlocked = allAgents.disallow.some(p => /\.js|\/js\//i.test(p));
+    if (jsBlocked) {
+      issues.push({
+        severity: 'critical',
+        ico: '🔴',
+        title: 'JavaScript Files Blocked',
+        detail: 'JavaScript resources are disallowed. Google cannot fully render your pages.',
+        why: 'Blocking JS severely impacts Google\'s ability to understand and rank your content.',
+        gain: '+12 Technical SEO'
+      });
+    }
+
+    // Image blocking
+    const imgBlocked = allAgents.disallow.some(p => /\.(jpg|jpeg|png|gif|webp|svg)|\/images?\//i.test(p));
+    if (imgBlocked) {
+      issues.push({
+        severity: 'warning',
+        ico: '🟡',
+        title: 'Images Blocked from Crawlers',
+        detail: 'Image paths are disallowed, preventing Google Image indexing.',
+        why: 'Image search is a significant traffic source. Blocking images reduces visibility.',
+        gain: '+5 Technical SEO'
+      });
+    }
+
+    // Crawl-delay detection
+    const crawlDelays = Object.entries(agents)
+      .filter(([, v]) => v.crawlDelay !== null)
+      .map(([agent, v]) => `${agent}: ${v.crawlDelay}s`);
+    if (crawlDelays.length) {
+      issues.push({
+        severity: 'warning',
+        ico: '🟡',
+        title: 'Crawl-Delay Directive Found',
+        detail: `Crawl delay set for: ${crawlDelays.join(', ')}. Note: Googlebot ignores this.`,
+        why: 'Crawl-delay is respected by some bots (Bing) but not Google. Manage crawl budget in GSC instead.',
+        gain: ''
+      });
+    }
+
+    // Sitemap declaration
+    if (!sitemaps.length) {
+      issues.push({
+        severity: 'warning',
+        ico: '🟡',
+        title: 'No Sitemap Declared',
+        detail: 'robots.txt should include: Sitemap: https://yourdomain.com/sitemap.xml',
+        why: 'Declaring your sitemap in robots.txt helps crawlers discover all pages faster.',
+        gain: '+6 Technical SEO'
+      });
+    } else {
+      issues.push({
+        severity: 'passed',
+        ico: '✅',
+        title: `Sitemap Declared (${sitemaps.length})`,
+        detail: sitemaps.join(', '),
+        why: '',
+        gain: ''
+      });
+    }
+
+    // Multiple user agents
+    const agentCount = Object.keys(agents).length;
+    if (agentCount > 1) {
+      issues.push({
+        severity: 'passed',
+        ico: '✅',
+        title: `${agentCount} User-Agent Rules Configured`,
+        detail: Object.keys(agents).join(', '),
+        why: '',
+        gain: ''
+      });
+    }
+
+    // wp-admin / admin paths
+    const adminBlocked = allAgents.disallow.some(p => /wp-admin|\/admin|\/dashboard/i.test(p));
+    if (!adminBlocked) {
+      issues.push({
+        severity: 'opportunity',
+        ico: '🔵',
+        title: 'Admin Paths Not Explicitly Blocked',
+        detail: 'Consider blocking /wp-admin/ or /admin/ from crawlers.',
+        why: 'Admin URLs waste crawl budget and may expose sensitive route names.',
+        gain: '+2 Technical SEO'
+      });
+    } else {
+      issues.push({ severity: 'passed', ico: '✅', title: 'Admin Paths Blocked', detail: 'Administrative URLs excluded from crawling.', why: '', gain: '' });
+    }
+
+    // Compute score
+    const criticals = issues.filter(i => i.severity === 'critical').length;
+    const warnings  = issues.filter(i => i.severity === 'warning').length;
+    const score = Math.max(0, Math.min(100, 100 - (criticals * 20) - (warnings * 8)));
+
+    return { issues, score, parsed, sitemaps };
+  },
+
+  generateTxt({ userAgent='*', disallowPaths='', sitemapUrl='', crawlDelay='' }) {
+    let out = `User-agent: ${userAgent || '*'}\n`;
+    const paths = disallowPaths.split('\n').map(p => p.trim()).filter(Boolean);
+    if (paths.length) {
+      paths.forEach(p => { out += `Disallow: ${p}\n`; });
+    } else {
+      out += `Disallow:\n`;
+    }
+    if (crawlDelay) out += `Crawl-delay: ${crawlDelay}\n`;
+    if (sitemapUrl) out += `\nSitemap: ${sitemapUrl}\n`;
+    return out;
+  }
+};
+
+/* ══════════════════════════════════════
+   SITEMAP INTELLIGENCE ENGINE
+   AuditForge.sitemap
+   ══════════════════════════════════════ */
+AuditForge.sitemap = {
+
+  parseXML(xmlText) {
+    if (!xmlText) return { urls: [], isIndex: false };
+    const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+    const isIndex = !!doc.querySelector('sitemapindex');
+    const urlNodes = [...doc.querySelectorAll('url')];
+    const urls = urlNodes.map(u => ({
+      loc:       (u.querySelector('loc')       || {}).textContent?.trim() || '',
+      lastmod:   (u.querySelector('lastmod')   || {}).textContent?.trim() || '',
+      changefreq:(u.querySelector('changefreq')|| {}).textContent?.trim() || '',
+      priority:  parseFloat((u.querySelector('priority') || {}).textContent || '0.5')
+    })).filter(u => u.loc);
+    return { urls, isIndex };
+  },
+
+  analyze(sitemapData, crawledPages) {
+    const issues = [];
+    const crawledUrls = new Set((crawledPages || []).map(p => p.url.replace(/\/$/, '')));
+
+    if (!sitemapData || !sitemapData.found) {
+      return {
+        score: 15,
+        level: 'Critical',
+        issues: [{ severity: 'critical', title: 'sitemap.xml Not Found', detail: 'No sitemap detected at /sitemap.xml.', gain: '+12 Technical SEO' }],
+        urls: [],
+        coverage: 0,
+        orphans: [],
+        inSitemapNotCrawled: []
+      };
+    }
+
+    const { urls, isIndex } = this.parseXML(sitemapData.content || '');
+
+    if (isIndex) {
+      issues.push({ severity: 'passed', title: 'Sitemap Index Detected', detail: 'Site uses a sitemap index file.', gain: '' });
+    }
+    if (!urls.length && !isIndex) {
+      issues.push({ severity: 'critical', title: 'Sitemap Has No URLs', detail: 'sitemap.xml was found but contains 0 <url> entries.', gain: '+8 Technical SEO' });
+    }
+
+    // Duplicate URLs
+    const urlSeen = {};
+    const duplicates = [];
+    urls.forEach(u => {
+      if (urlSeen[u.loc]) duplicates.push(u.loc);
+      urlSeen[u.loc] = true;
+    });
+    if (duplicates.length) {
+      issues.push({ severity: 'warning', title: `${duplicates.length} Duplicate URL(s) in Sitemap`, detail: duplicates.slice(0,3).join(', '), gain: '+3 Technical SEO' });
+    }
+
+    // Coverage analysis
+    const sitemapUrlSet = new Set(urls.map(u => u.loc.replace(/\/$/, '')));
+    const orphans = [...crawledUrls].filter(u => !sitemapUrlSet.has(u) && !u.includes('?'));
+    const inSitemapNotCrawled = [...sitemapUrlSet].filter(u => !crawledUrls.has(u));
+    const coverage = crawledUrls.size > 0
+      ? Math.round(([...crawledUrls].filter(u => sitemapUrlSet.has(u)).length / crawledUrls.size) * 100)
+      : 0;
+
+    if (orphans.length) {
+      issues.push({
+        severity: 'warning',
+        title: `${orphans.length} Orphan Page(s) Not in Sitemap`,
+        detail: 'Crawled pages missing from sitemap.',
+        gain: '+5 Technical SEO'
+      });
+    }
+
+    // Missing lastmod
+    const noLastmod = urls.filter(u => !u.lastmod).length;
+    if (noLastmod > urls.length / 2) {
+      issues.push({ severity: 'warning', title: 'Most URLs Missing lastmod', detail: `${noLastmod} URLs have no <lastmod> date.`, gain: '+2 Technical SEO' });
+    }
+
+    // Missing priority
+    const defaultPriority = urls.filter(u => u.priority === 0.5).length;
+    if (defaultPriority === urls.length && urls.length > 0) {
+      issues.push({ severity: 'opportunity', title: 'All URLs Using Default Priority', detail: 'Differentiate URL priorities to guide crawler attention.', gain: '+2 Technical SEO' });
+    }
+
+    if (!issues.some(i => i.severity === 'critical')) {
+      issues.push({ severity: 'passed', title: 'sitemap.xml Found and Valid', detail: `${urls.length} URLs indexed.`, gain: '' });
+    }
+
+    // Score
+    const criticals = issues.filter(i => i.severity === 'critical').length;
+    const warnings  = issues.filter(i => i.severity === 'warning').length;
+    const score = Math.max(0, Math.min(100,
+      (urls.length ? 40 : 0) +
+      (coverage >= 80 ? 30 : coverage >= 50 ? 15 : 0) +
+      (duplicates.length === 0 ? 15 : 0) +
+      (orphans.length === 0 ? 15 : 0) -
+      (criticals * 20) - (warnings * 5)
+    ));
+
+    const level = score >= 85 ? 'Excellent' : score >= 65 ? 'Good' : score >= 40 ? 'Needs Improvement' : 'Critical';
+
+    return { score, level, issues, urls, coverage, orphans, inSitemapNotCrawled };
+  },
+
+  generateXML(urlList, baseUrl) {
+    const date = new Date().toISOString().split('T')[0];
+    const urlEntries = urlList.map(u => {
+      const loc = u.url || u;
+      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${date}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
+    }).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>`;
+  }
+};
+
+/* ══════════════════════════════════════
+   RECOMMENDATIONS ENGINE
+   AuditForge.recommendations
+   Extends (does not replace) getIssues()
+   ══════════════════════════════════════ */
+AuditForge.recommendations = {
+
+  _cache: null,
+
+  build(pg) {
+    if (!pg) return [];
+    _ensureExtended(pg);
+
+    const recs = [];
+    const scores = AuditForge.scores.compute(pg) || {};
+
+    // Helper
+    function rec(obj) { recs.push(obj); }
+
+    // ── Technical SEO ──
+    if (!pg.title) rec({
+      title: 'Add a Title Tag',
+      severity: 'critical', category: 'Technical SEO', impact: 'Critical',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+18 SEO',
+      explanation: 'Missing title tag is the single most damaging on-page SEO issue. Google uses the title as the primary ranking signal and CTR driver in search results.',
+      action: 'Add <title>Your Page Title – Brand Name</title> inside the <head>. Keep it 50–60 characters.'
+    });
+    else if (pg.title.length > 60) rec({
+      title: 'Shorten Title Tag',
+      severity: 'high', category: 'Technical SEO', impact: 'High',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+6 SEO',
+      explanation: `Title is ${pg.title.length} characters. Google truncates titles beyond ~600px (~60 chars), reducing CTR.`,
+      action: 'Edit the title to under 60 characters while keeping the primary keyword near the start.'
+    });
+
+    if (!pg.desc) rec({
+      title: 'Add Meta Description',
+      severity: 'high', category: 'Technical SEO', impact: 'High',
+      difficulty: 'Easy', estimatedTime: '10 minutes', potentialGain: '+12 SEO',
+      explanation: 'Pages without meta descriptions lose up to 30% CTR. Google may auto-generate one from body content, often poorly.',
+      action: 'Write a unique 120–160 character description that summarizes the page and includes the target keyword.'
+    });
+    else if (pg.desc.length > 160) rec({
+      title: 'Shorten Meta Description',
+      severity: 'medium', category: 'Technical SEO', impact: 'Medium',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+4 SEO',
+      explanation: `Description is ${pg.desc.length} characters. Google truncates at ~920px (~160 chars).`,
+      action: 'Trim to 120–160 characters. Lead with the most important information.'
+    });
+
+    if (!pg.h1s || !pg.h1s.length) rec({
+      title: 'Add H1 Heading',
+      severity: 'critical', category: 'Technical SEO', impact: 'Critical',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+14 SEO',
+      explanation: 'Missing H1 is a fundamental SEO error. Search engines use H1 as a primary content signal alongside the title tag.',
+      action: 'Add exactly one <h1> per page containing the primary keyword. It should match user search intent.'
+    });
+    else if (pg.h1s.length > 1) rec({
+      title: 'Remove Duplicate H1 Tags',
+      severity: 'high', category: 'Technical SEO', impact: 'High',
+      difficulty: 'Easy', estimatedTime: '10 minutes', potentialGain: '+8 SEO',
+      explanation: `Found ${pg.h1s.length} H1 tags. Multiple H1s dilute the heading signal and confuse both crawlers and users.`,
+      action: 'Keep only one H1. Change additional H1s to H2 or H3 where appropriate.'
+    });
+
+    if (!pg.canonical) rec({
+      title: 'Add Canonical Tag',
+      severity: 'medium', category: 'Technical SEO', impact: 'Medium',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+5 SEO',
+      explanation: 'Without a canonical tag, Google may index duplicate versions of your page (www vs non-www, trailing slash, etc.).',
+      action: 'Add <link rel="canonical" href="https://yourdomain.com/page/"> in the <head>.'
+    });
+
+    if (window._lastRobots && !window._lastRobots.found) rec({
+      title: 'Create robots.txt',
+      severity: 'high', category: 'Technical SEO', impact: 'High',
+      difficulty: 'Easy', estimatedTime: '10 minutes', potentialGain: '+8 SEO',
+      explanation: 'robots.txt controls crawler access and declares your sitemap. Missing it is an oversight that affects crawl efficiency.',
+      action: 'Create /robots.txt with at minimum: User-agent: * and Sitemap: https://yourdomain.com/sitemap.xml'
+    });
+
+    if (window._lastSitemap && !window._lastSitemap.found) rec({
+      title: 'Create sitemap.xml',
+      severity: 'high', category: 'Technical SEO', impact: 'High',
+      difficulty: 'Easy', estimatedTime: '15 minutes', potentialGain: '+10 SEO',
+      explanation: 'A sitemap ensures all pages are discoverable by search engines, even those with few internal links.',
+      action: 'Generate a sitemap.xml using the Sitemap tool in AuditForge and submit it to Google Search Console.'
+    });
+
+    if (pg.robots && /noindex/i.test(pg.robots)) rec({
+      title: 'Remove Noindex Directive',
+      severity: 'critical', category: 'Technical SEO', impact: 'Critical',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+15 SEO',
+      explanation: 'This page has a noindex directive. Google will NOT include it in search results.',
+      action: 'Remove the noindex tag unless you intentionally want this page excluded from Google. Check robots meta and X-Robots-Tag headers.'
+    });
+
+    // ── Content Quality ──
+    const wc = pg.wordCount || 0;
+    if (wc < 300) rec({
+      title: 'Increase Content Length',
+      severity: wc < 100 ? 'critical' : 'high', category: 'Content',
+      impact: wc < 100 ? 'Critical' : 'High', difficulty: 'Advanced',
+      estimatedTime: 'Multiple hours', potentialGain: wc < 100 ? '+25 Content' : '+15 Content',
+      explanation: `Page has only ${wc} words. Thin content rarely ranks. Most top-ranking pages exceed 1,000 words for competitive topics.`,
+      action: 'Expand with relevant, useful information. Cover subtopics, FAQs, and supporting details that serve user intent.'
+    });
+
+    if (!pg.hasLists) rec({
+      title: 'Add Lists for Scannability',
+      severity: 'medium', category: 'Content', impact: 'Medium',
+      difficulty: 'Easy', estimatedTime: '15 minutes', potentialGain: '+5 Content',
+      explanation: 'Lists (ul/ol) break up content and are frequently used in Google Featured Snippets.',
+      action: 'Convert any steps, features, or grouped items into bulleted or numbered lists.'
+    });
+
+    if (!pg.faqCount || pg.faqCount < 2) rec({
+      title: 'Add FAQ Section',
+      severity: 'high', category: 'Content', impact: 'High',
+      difficulty: 'Medium', estimatedTime: '30 minutes', potentialGain: '+8 AI + +8 Content',
+      explanation: 'FAQ sections increase AI citation likelihood, improve Featured Snippet chances, and match conversational search queries.',
+      action: 'Add 5–10 question-and-answer pairs addressing common user questions. Combine with FAQPage schema.'
+    });
+
+    if (pg.readability && pg.readability.flesch < 50) rec({
+      title: 'Improve Content Readability',
+      severity: 'medium', category: 'Content', impact: 'Medium',
+      difficulty: 'Advanced', estimatedTime: '1 hour', potentialGain: '+10 Content',
+      explanation: `Flesch score: ${pg.readability.flesch}/100. Difficult to read content increases bounce rate and reduces engagement.`,
+      action: 'Shorten sentences to under 20 words. Replace jargon with plain language. Use active voice.'
+    });
+
+    // ── Accessibility ──
+    if (pg.missingAlt > 0) rec({
+      title: `Fix ${pg.missingAlt} Missing Alt Text(s)`,
+      severity: 'high', category: 'Accessibility', impact: 'High',
+      difficulty: 'Easy', estimatedTime: pg.missingAlt <= 5 ? '15 minutes' : '30 minutes',
+      potentialGain: `-${Math.min(20, pg.missingAlt*3)} removed from score + image SEO`,
+      explanation: 'Images without alt text are invisible to screen readers and miss image search ranking opportunities.',
+      action: 'Add descriptive alt attributes to all meaningful images. Decorative images can use alt="".'
+    });
+
+    if (!pg.hasLangAttr) rec({
+      title: 'Add lang Attribute to <html>',
+      severity: 'medium', category: 'Accessibility', impact: 'Medium',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+8 Accessibility',
+      explanation: 'The lang attribute helps screen readers use the correct language pronunciation and aids search engines.',
+      action: 'Add lang="en" (or your language code) to the <html> tag: <html lang="en">'
+    });
+
+    if (!pg.hasSemantic) rec({
+      title: 'Use Semantic HTML Landmarks',
+      severity: 'medium', category: 'Accessibility', impact: 'Medium',
+      difficulty: 'Medium', estimatedTime: '30 minutes', potentialGain: '+10 Accessibility + +9 AI',
+      explanation: 'Semantic elements (main, nav, header, footer, article) improve accessibility and AI/crawler understanding.',
+      action: 'Wrap your content in semantic HTML5 elements. Replace generic <div> containers with meaningful tags.'
+    });
+
+    // ── Schema Health ──
+    if (!pg.hasSchema) rec({
+      title: 'Add JSON-LD Structured Data',
+      severity: 'high', category: 'Schema', impact: 'High',
+      difficulty: 'Medium', estimatedTime: '30 minutes', potentialGain: '+40 Schema + +12 AI',
+      explanation: 'Structured data enables Rich Results in Google (stars, FAQs, breadcrumbs) and improves AI citation likelihood.',
+      action: 'Use the Schema Builder in AuditForge to generate and add Organization or Article JSON-LD to your page.'
+    });
+    else if (!pg.hasFAQSchema) rec({
+      title: 'Add FAQPage Schema',
+      severity: 'medium', category: 'Schema', impact: 'Medium',
+      difficulty: 'Medium', estimatedTime: '20 minutes', potentialGain: '+20 Schema',
+      explanation: 'FAQPage schema can trigger accordion rich results in Google, doubling your SERP real estate.',
+      action: 'Add FAQPage JSON-LD listing your question/answer pairs. Minimum 2 FAQs required.'
+    });
+
+    if (!pg.hasBreadcrumbSchema) rec({
+      title: 'Add BreadcrumbList Schema',
+      severity: 'low', category: 'Schema', impact: 'Low',
+      difficulty: 'Easy', estimatedTime: '15 minutes', potentialGain: '+10 Schema',
+      explanation: 'Breadcrumb schema shows your site hierarchy in Google search results, improving click-through rate.',
+      action: 'Add BreadcrumbList JSON-LD reflecting your page hierarchy (Home > Category > Page).'
+    });
+
+    // ── Social Optimization ──
+    if (!pg.ogTitle || !pg.ogDesc || !pg.ogImage) rec({
+      title: 'Add Open Graph Tags',
+      severity: 'medium', category: 'Social', impact: 'High',
+      difficulty: 'Easy', estimatedTime: '15 minutes', potentialGain: '+35–55 Social',
+      explanation: 'Open Graph tags control how your page appears when shared on Facebook, LinkedIn, and Slack. Missing them results in ugly, unbranded previews.',
+      action: 'Add og:title, og:description, og:image, and og:type meta tags to your <head>.'
+    });
+
+    if (!pg.twitterCard) rec({
+      title: 'Add Twitter Card Tags',
+      severity: 'low', category: 'Social', impact: 'Medium',
+      difficulty: 'Easy', estimatedTime: '10 minutes', potentialGain: '+15 Social',
+      explanation: 'Twitter card tags define how your content appears in tweets. Without them, Twitter generates generic previews.',
+      action: 'Add <meta name="twitter:card" content="summary_large_image"> along with twitter:title and twitter:image.'
+    });
+
+    // ── AI Visibility ──
+    if (!pg.hasSchema) rec({
+      title: 'Add Structured Data for AI Readiness',
+      severity: 'high', category: 'AI Visibility', impact: 'High',
+      difficulty: 'Medium', estimatedTime: '30 minutes', potentialGain: '+12 AI',
+      explanation: 'LLMs use structured data to understand entity relationships and page purpose. Pages with schema are more likely to be cited.',
+      action: 'Implement FAQPage, Article, or Organization schema to signal content structure to AI systems.'
+    });
+
+    if (pg.definitionCount < 2) rec({
+      title: 'Add Clear Definitions',
+      severity: 'medium', category: 'AI Visibility', impact: 'Medium',
+      difficulty: 'Medium', estimatedTime: '30 minutes', potentialGain: '+10 AI',
+      explanation: 'AI systems frequently extract and cite definitions. Content with clear "X is a..." patterns is more likely to appear in AI answers.',
+      action: 'For key concepts on your page, add explicit definition sentences: "[Term] is a [type] that..."'
+    });
+
+    if (pg.citationCount < 1) rec({
+      title: 'Add External Citations and Sources',
+      severity: 'low', category: 'AI Visibility', impact: 'Medium',
+      difficulty: 'Easy', estimatedTime: '20 minutes', potentialGain: '+8 AI',
+      explanation: 'Pages that cite credible sources are seen as more authoritative by both search engines and AI systems.',
+      action: 'Link to reputable sources (studies, official sites, statistics). Use <cite> and <blockquote> where appropriate.'
+    });
+
+    // ── Robots/Sitemap ──
+    if (window._lastRobots && window._lastRobots.found && window._lastRobots.disallowAll) rec({
+      title: 'Fix robots.txt: Disallow: / Blocking All Crawlers',
+      severity: 'critical', category: 'Technical SEO', impact: 'Critical',
+      difficulty: 'Easy', estimatedTime: '5 minutes', potentialGain: '+25 Technical SEO',
+      explanation: 'Your robots.txt is blocking ALL search engines. This is the most severe SEO configuration error possible.',
+      action: 'Remove or change "Disallow: /" in robots.txt. Only block specific paths you want excluded.'
+    });
+
+    // Sort: critical first, then by potential gain (parse number)
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    recs.sort((a, b) => {
+      const sevDiff = (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3);
+      if (sevDiff !== 0) return sevDiff;
+      const gainA = parseInt((a.potentialGain || '').match(/\d+/) || 0);
+      const gainB = parseInt((b.potentialGain || '').match(/\d+/) || 0);
+      return gainB - gainA;
+    });
+
+    this._cache = recs;
+    return recs.slice(0, 20);
+  }
+};
+
+/* ══════════════════════════════════════
+   REPLACE loadSuggestions()
+   Renders enterprise recommendation cards
+   Extends, does not touch original
+   ══════════════════════════════════════ */
+(function replaceLoadSuggestions() {
+  window.loadSuggestions = function(pg) {
+    const wrap = $('mod-suggestions');
+    if (!wrap) return;
+    if (!pg) { wrap.innerHTML = '<div class="grid-empty">No page data.</div>'; return; }
+
+    const recs = AuditForge.recommendations.build(pg);
+    if (!recs.length) {
+      wrap.innerHTML = '<div class="ok-banner">✓ No urgent recommendations — this page is well optimized!</div>';
+      return;
+    }
+
+    // State
+    let searchVal = '';
+    let activeFilter = 'all';
+    let sortKey = 'severity';
+
+    function render() {
+      const filtered = recs.filter(r => {
+        const matchSearch = !searchVal ||
+          r.title.toLowerCase().includes(searchVal) ||
+          r.category.toLowerCase().includes(searchVal) ||
+          r.explanation.toLowerCase().includes(searchVal);
+        const matchFilter = activeFilter === 'all' || r.category === activeFilter ||
+          r.severity === activeFilter;
+        return matchSearch && matchFilter;
+      });
+
+      const sorted = [...filtered].sort((a, b) => {
+        if (sortKey === 'severity') {
+          const so = {critical:0,high:1,medium:2,low:3};
+          return (so[a.severity]||3)-(so[b.severity]||3);
+        }
+        if (sortKey === 'gain') {
+          const ga = parseInt((a.potentialGain||'').match(/\d+/)||0);
+          const gb = parseInt((b.potentialGain||'').match(/\d+/)||0);
+          return gb - ga;
+        }
+        if (sortKey === 'difficulty') {
+          const do_ = {Easy:0,Medium:1,Advanced:2};
+          return (do_[a.difficulty]||1)-(do_[b.difficulty]||1);
+        }
+        return 0;
+      });
+
+      const categories = [...new Set(recs.map(r => r.category))];
+      const filterBtns = ['all', ...categories].map(f =>
+        `<button class="rec-filter ${activeFilter===f?'active':''}" data-filter="${f}">${f==='all'?'All':f}</button>`
+      ).join('');
+
+      const cards = sorted.length ? sorted.map((r, idx) => `
+        <div class="rec-card" data-idx="${idx}">
+          <div class="rec-card-header">
+            <span class="rec-severity ${r.severity}">${r.severity.toUpperCase()}</span>
+            <span class="rec-category">${r.category}</span>
+            <span class="rec-title">${r.title}</span>
+            ${r.potentialGain ? `<span class="rec-gain">${r.potentialGain}</span>` : ''}
+          </div>
+          <div class="rec-body">${r.explanation}</div>
+          <div class="rec-action">→ ${r.action}</div>
+          <div class="rec-meta">
+            <span class="rec-meta-item">⏱ Time: <span>${r.estimatedTime}</span></span>
+            <span class="rec-meta-item">💪 Difficulty: <span>${r.difficulty}</span></span>
+            <span class="rec-meta-item">⚡ Impact: <span>${r.impact}</span></span>
+          </div>
+        </div>`).join('') : '<div class="rec-empty">No recommendations match your filter.</div>';
+
+      wrap.innerHTML = `
+        <div class="rec-controls">
+          <input class="rec-search" id="recSearch" placeholder="Search recommendations…" value="${searchVal}">
+          <select class="rec-sort" id="recSort">
+            <option value="severity" ${sortKey==='severity'?'selected':''}>Sort: Severity</option>
+            <option value="gain" ${sortKey==='gain'?'selected':''}>Sort: Potential Gain</option>
+            <option value="difficulty" ${sortKey==='difficulty'?'selected':''}>Sort: Difficulty</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          ${filterBtns}
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px">
+          Showing ${sorted.length} of ${recs.length} recommendations
+        </div>
+        <div class="rec-list">${cards}</div>`;
+
+      // Wire controls
+      const si = $('recSearch');
+      if (si) si.addEventListener('input', e => { searchVal = e.target.value.toLowerCase().trim(); render(); });
+
+      const ss = $('recSort');
+      if (ss) ss.addEventListener('change', e => { sortKey = e.target.value; render(); });
+
+      wrap.querySelectorAll('.rec-filter').forEach(btn => {
+        btn.addEventListener('click', () => { activeFilter = btn.dataset.filter; render(); });
+      });
+    }
+
+    render();
+  };
+})();
+
+/* ══════════════════════════════════════
+   ROBOTS & SITEMAP PANEL — loadRobotsSitemap()
+   Replaces the existing stub that
+   referenced a missing DOM node.
+   ══════════════════════════════════════ */
+(function replaceLoadRobotsSitemap() {
+  window.loadRobotsSitemap = function(pg) {
+    const wrap = $('mod-robots');
+    if (!wrap) return;
+
+    const robotsData  = window._lastRobots  || { found: false, content: '' };
+    const sitemapData = window._lastSitemap || { found: false };
+    const robotsAnalysis  = AuditForge.robots.analyze(robotsData);
+    const sitemapAnalysis = AuditForge.sitemap.analyze(sitemapData, pages);
+
+    const rHealth = robotsAnalysis.score;
+    const rColor  = rHealth >= 80 ? 'var(--green)' : rHealth >= 50 ? 'var(--amber)' : 'var(--red)';
+
+    const sHealth = sitemapAnalysis.score;
+    const sLevel  = sitemapAnalysis.level || 'Critical';
+    const sColor  = sHealth >= 85 ? 'var(--green)' : sHealth >= 65 ? 'var(--blue)' : sHealth >= 40 ? 'var(--amber)' : 'var(--red)';
+    const sLevelCls = sLevel.toLowerCase().replace(' ', '-');
+
+    // Robots issues HTML
+    const robotsIssueHtml = robotsAnalysis.issues.map(i => `
+      <div class="robots-issue-item ${i.severity}">
+        <span class="robots-issue-ico">${i.ico}</span>
+        <div class="robots-issue-body">
+          <div class="robots-issue-title">${i.title}</div>
+          <div class="robots-issue-detail">${i.detail}</div>
+          ${i.why ? `<div class="robots-issue-detail" style="margin-top:3px;color:var(--text2)">${i.why}</div>` : ''}
+        </div>
+        ${i.gain ? `<span class="robots-issue-gain">${i.gain}</span>` : ''}
+      </div>`).join('');
+
+    // Sitemap issues HTML
+    const sitIssueIco = { critical:'🔴', warning:'🟡', opportunity:'🔵', passed:'✅' };
+    const sitemapIssueHtml = sitemapAnalysis.issues.map(i => `
+      <div class="robots-issue-item ${i.severity||'passed'}">
+        <span class="robots-issue-ico">${sitIssueIco[i.severity]||'ℹ'}</span>
+        <div class="robots-issue-body">
+          <div class="robots-issue-title">${i.title}</div>
+          <div class="robots-issue-detail">${i.detail}</div>
+        </div>
+        ${i.gain ? `<span class="robots-issue-gain">${i.gain}</span>` : ''}
+      </div>`).join('');
+
+    // URL coverage table
+    const urlTableRows = sitemapAnalysis.urls.slice(0, 15).map(u => {
+      const isCrawled = pages.some(p => p.url.replace(/\/$/,'') === u.loc.replace(/\/$/,''));
+      const badge = isCrawled
+        ? '<span class="sitemap-url-badge" style="background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.2)">Crawled</span>'
+        : '<span class="sitemap-url-badge" style="background:var(--border);color:var(--text3)">Not Crawled</span>';
+      const path = u.loc.replace(/https?:\/\/[^/]+/, '') || '/';
+      return `<div class="sitemap-url-row">
+        <span class="sitemap-url-path" title="${u.loc}">${path}</span>
+        ${u.lastmod ? `<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${u.lastmod}</span>` : ''}
+        ${badge}
+      </div>`;
+    }).join('');
+
+    // Orphan list
+    const orphanHtml = sitemapAnalysis.orphans.slice(0, 8).map(u =>
+      `<div class="sitemap-url-row">
+        <span class="sitemap-url-path" title="${u}">${u.replace(/https?:\/\/[^/]+/,'')}</span>
+        <span class="sitemap-url-badge" style="background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.2)">Orphan</span>
+      </div>`
+    ).join('');
+
+    wrap.innerHTML = `
+      <!-- ── ROBOTS SECTION ── -->
+      <div class="sec-title" style="margin-bottom:10px">robots.txt Analysis</div>
+
+      <div class="robots-health-bar">
+        <span class="robots-health-label">Robots Health</span>
+        <div class="robots-health-track">
+          <div class="robots-health-fill" style="width:0%;background:${rColor}" id="robotsHealthFill"></div>
+        </div>
+        <span class="robots-health-score" style="color:${rColor}">${rHealth}/100</span>
+      </div>
+
+      ${robotsData.found && robotsData.content ? `
+        <div style="margin-bottom:10px">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">Content Preview</div>
+          <div class="robots-pre">${robotsData.content.slice(0, 800).replace(/</g,'&lt;')}</div>
+        </div>` : ''}
+
+      <div class="robots-issue-list">${robotsIssueHtml}</div>
+
+      <!-- ── robots.txt GENERATOR ── -->
+      <div class="robots-generator">
+        <div class="robots-gen-title">🛠 robots.txt Generator</div>
+        <div class="robots-gen-fields">
+          <div class="robots-gen-field">
+            <label>User-Agent</label>
+            <input id="rgenAgent" value="*" placeholder="* or Googlebot">
+          </div>
+          <div class="robots-gen-field">
+            <label>Sitemap URL</label>
+            <input id="rgenSitemap" placeholder="https://yourdomain.com/sitemap.xml">
+          </div>
+          <div class="robots-gen-field" style="grid-column:1/-1">
+            <label>Disallow Paths (one per line)</label>
+            <textarea id="rgenDisallow" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:4px;padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:11px;resize:vertical" placeholder="/admin/\n/wp-admin/\n/private/"></textarea>
+          </div>
+          <div class="robots-gen-field">
+            <label>Crawl-Delay (optional)</label>
+            <input id="rgenDelay" type="number" placeholder="e.g. 1" min="0" max="60">
+          </div>
+        </div>
+        <pre class="robots-gen-output" id="robotsGenOutput">User-agent: *\nDisallow:\n</pre>
+        <div class="robots-gen-btns">
+          <button class="exec-btn" style="padding:8px 16px;font-size:12px" onclick="AuditForge._updateRobotsGen()">Generate</button>
+          <button class="exp-btn" onclick="AuditForge._copyRobots()">Copy</button>
+          <button class="exp-btn" onclick="AuditForge._downloadRobots()">Download</button>
+          <button class="exp-btn" onclick="AuditForge._resetRobotsGen()">Reset</button>
+        </div>
+      </div>
+
+      <div style="height:24px"></div>
+
+      <!-- ── SITEMAP SECTION ── -->
+      <div class="sec-title" style="margin-bottom:10px">sitemap.xml Intelligence</div>
+
+      <div class="sitemap-health-card ${sLevelCls}">
+        <div class="sitemap-health-icon">${sHealth>=85?'🟢':sHealth>=65?'🔵':sHealth>=40?'🟡':'🔴'}</div>
+        <div class="sitemap-health-score-num" style="color:${sColor}">${sHealth}</div>
+        <div>
+          <div class="sitemap-health-label">${sLevel}</div>
+          <div class="sitemap-health-sub">${sitemapAnalysis.urls.length} URLs · ${sitemapAnalysis.coverage}% crawl coverage</div>
+        </div>
+      </div>
+
+      <div class="sitemap-coverage-grid">
+        <div class="sitemap-cov-card">
+          <div class="sitemap-cov-val" style="color:var(--green)">${sitemapAnalysis.urls.length}</div>
+          <div class="sitemap-cov-label">URLs in Sitemap</div>
+        </div>
+        <div class="sitemap-cov-card">
+          <div class="sitemap-cov-val" style="color:${sitemapAnalysis.coverage>=80?'var(--green)':'var(--amber)'}">${sitemapAnalysis.coverage}%</div>
+          <div class="sitemap-cov-label">Coverage</div>
+        </div>
+        <div class="sitemap-cov-card">
+          <div class="sitemap-cov-val" style="color:${sitemapAnalysis.orphans.length?'var(--amber)':'var(--green)'}">${sitemapAnalysis.orphans.length}</div>
+          <div class="sitemap-cov-label">Orphan Pages</div>
+        </div>
+        <div class="sitemap-cov-card">
+          <div class="sitemap-cov-val">${sitemapAnalysis.inSitemapNotCrawled.length}</div>
+          <div class="sitemap-cov-label">Not Crawled</div>
+        </div>
+      </div>
+
+      <div class="robots-issue-list" style="margin-bottom:12px">${sitemapIssueHtml}</div>
+
+      ${sitemapAnalysis.urls.length ? `
+        <div class="sec-title" style="margin-bottom:6px">Sitemap URLs</div>
+        <div class="sitemap-url-list">${urlTableRows}</div>` : ''}
+
+      ${sitemapAnalysis.orphans.length ? `
+        <div class="sec-title" style="margin-top:12px;margin-bottom:6px">Orphan Pages (crawled but not in sitemap)</div>
+        <div class="sitemap-url-list">${orphanHtml}</div>` : ''}
+
+      <!-- ── SITEMAP GENERATOR ── -->
+      <div class="sitemap-generator" style="margin-top:14px">
+        <div class="robots-gen-title">🗺 sitemap.xml Generator</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:8px">
+          Generates a sitemap from your crawled pages (${pages.filter(p=>p.status===200).length} live pages).
+        </div>
+        <pre class="sitemap-gen-output" id="sitemapGenOutput">${AuditForge._genSitemap()}</pre>
+        <div class="robots-gen-btns">
+          <button class="exp-btn" onclick="AuditForge._copySitemap()">Copy XML</button>
+          <button class="exp-btn" onclick="AuditForge._downloadSitemap()">Download XML</button>
+        </div>
+      </div>`;
+
+    // Animate health bar
+    setTimeout(() => {
+      const fill = $('robotsHealthFill');
+      if (fill) fill.style.width = rHealth + '%';
+    }, 100);
+  };
+})();
+
+/* ── Robots generator helpers ── */
+AuditForge._updateRobotsGen = function() {
+  const out = $('robotsGenOutput'); if (!out) return;
+  out.textContent = AuditForge.robots.generateTxt({
+    userAgent:    ($('rgenAgent') || {}).value || '*',
+    disallowPaths:($('rgenDisallow') || {}).value || '',
+    sitemapUrl:   ($('rgenSitemap') || {}).value || '',
+    crawlDelay:   ($('rgenDelay') || {}).value || ''
+  });
+};
+AuditForge._copyRobots = function() {
+  const out = $('robotsGenOutput'); if (!out) return;
+  navigator.clipboard.writeText(out.textContent).then(() => showToast('Copied robots.txt'));
+};
+AuditForge._downloadRobots = function() {
+  const out = $('robotsGenOutput'); if (!out) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out.textContent], {type:'text/plain'}));
+  a.download = 'robots.txt'; a.click();
+};
+AuditForge._resetRobotsGen = function() {
+  ['rgenAgent','rgenDisallow','rgenSitemap','rgenDelay'].forEach(id => {
+    const el = $(id); if (el) el.value = id === 'rgenAgent' ? '*' : '';
+  });
+  AuditForge._updateRobotsGen();
+};
+
+/* ── Sitemap generator helpers ── */
+AuditForge._genSitemap = function() {
+  const livePgs = pages.filter(p => p.status === 200);
+  if (!livePgs.length) return '<!-- Run an audit first to generate a sitemap -->';
+  return AuditForge.sitemap.generateXML(livePgs);
+};
+AuditForge._copySitemap = function() {
+  const out = $('sitemapGenOutput'); if (!out) return;
+  navigator.clipboard.writeText(out.textContent).then(() => showToast('Sitemap XML copied'));
+};
+AuditForge._downloadSitemap = function() {
+  const xml = AuditForge._genSitemap();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([xml], {type:'application/xml'}));
+  a.download = 'sitemap.xml'; a.click();
+};
+
+/* ══════════════════════════════════════
+   HOOK: openInspector extension
+   Wrap to ensure _ensureExtended runs
+   and robots/sitemap tab is wired
+   ══════════════════════════════════════ */
+(function hookOpenInspector() {
+  const _orig = window.openInspector;
+  window.openInspector = function(id) {
+    _orig(id);
+    // After original runs, extend the current page
+    const pg = pages.find(p => p.id === id);
+    if (pg) {
+      _ensureExtended(pg);
+      // If robots tab is already active, render it
+      const robotsPane = $('mod-robots');
+      if (robotsPane && robotsPane.classList.contains('active')) {
+        loadRobotsSitemap(pg);
+      }
+    }
+  };
+})();
+
+/* Wire robots tab click to also call loadRobotsSitemap */
+(function wireRobotsTab() {
+  // Wait for DOM ready (script runs at end of body)
+  const robotsTab = document.querySelector('.mtab[data-mod="robots"]');
+  if (robotsTab) {
+    robotsTab.addEventListener('click', () => {
+      if (curPage) loadRobotsSitemap(curPage);
+    });
+  }
+})();
+
+/* ══════════════════════════════════════
+   EXTEND: getIssues() — wrap to add
+   social/accessibility/AI issues
+   without replacing existing logic
+   ══════════════════════════════════════ */
+(function extendGetIssues() {
+  const _orig = window.getIssues || getIssues;
+  window.getIssues = function(pg) {
+    const base = _orig(pg);
+    if (!pg) return base;
+    _ensureExtended(pg);
+
+    const extra = [];
+
+    // Social issues
+    if (!pg.ogTitle) extra.push({ sev:'medium', ico:'🔵', title:'Missing og:title', detail:'No Open Graph title tag found.', fix:'Add <meta property="og:title" content="Your Title"> to <head>.' });
+    if (!pg.ogImage) extra.push({ sev:'medium', ico:'🔵', title:'Missing og:image', detail:'No Open Graph image defined.', fix:'Add <meta property="og:image" content="https://yoursite.com/og-image.png">.' });
+    if (!pg.twitterCard) extra.push({ sev:'low', ico:'⚪', title:'Missing Twitter Card', detail:'No twitter:card meta tag found.', fix:'Add <meta name="twitter:card" content="summary_large_image">.' });
+
+    // Accessibility
+    if (!pg.hasLangAttr) extra.push({ sev:'medium', ico:'🔵', title:'Missing lang Attribute', detail:'The <html> element has no lang attribute.', fix:'Add lang="en" to your <html> tag.' });
+
+    // AI
+    if (!pg.faqCount || pg.faqCount < 2) extra.push({ sev:'medium', ico:'🔵', title:'No FAQ Content Detected', detail:'Pages with FAQ sections rank better and are cited more by AI systems.', fix:'Add a Frequently Asked Questions section with at least 5 Q&A pairs.' });
+    if (pg.definitionCount < 1) extra.push({ sev:'low', ico:'⚪', title:'No Definition Patterns', detail:'AI systems extract definitions. Pages with clear definitions are cited more often.', fix:'Add "X is a..." or "X refers to..." patterns for key terms.' });
+
+    return [...base, ...extra];
+  };
+})();
+
+/* ══════════════════════════════════════
+   SCORE ENGINE — display helper
+   Renders score breakdown on the
+   issues tab header area
+   ══════════════════════════════════════ */
+function renderScoreBreakdown(pg) {
+  // Injected above the issues pane when issues tab is loaded
+  const wrap = $('mod-issues'); if (!wrap) return;
+  const scores = AuditForge.scores.compute(pg);
+  if (!scores) return;
+
+  const dims = [
+    { label: 'Technical SEO',      key: 'technicalSEO',      icon: '⚙' },
+    { label: 'Content Quality',    key: 'contentQuality',     icon: '📝' },
+    { label: 'Accessibility',      key: 'accessibility',      icon: '♿' },
+    { label: 'Schema Health',      key: 'schemaHealth',       icon: '📋' },
+    { label: 'Social Opt.',        key: 'socialOptimization', icon: '📱' },
+    { label: 'AI Visibility',      key: 'aiVisibility',       icon: '🤖' }
+  ];
+
+  const dimCards = dims.map(d => {
+    const val = scores[d.key] || 0;
+    const col = AuditForge.scores.colorFor(val);
+    const deducts = (scores.deductions[d.key.replace('technicalSEO','technical').replace('contentQuality','content').replace('schemaHealth','schema').replace('socialOptimization','social').replace('aiVisibility','ai').replace('accessibility','accessibility')] || [])
+      .slice(0, 3)
+      .map(dd => `<div class="score-deduction-row">
+        <span class="score-deduction-label">${dd.l}</span>
+        <span class="score-deduction-val ${dd.v < 0 ? 'neg' : 'pos'}">${dd.v > 0 ? '+' : ''}${dd.v}</span>
+      </div>`).join('');
+    return `<div class="score-dim-card">
+      <div class="score-dim-label">${d.icon} ${d.label}</div>
+      <div class="score-dim-value" style="color:${col}">${val}</div>
+      <div class="score-dim-bar">
+        <div class="score-dim-fill" style="width:0%;background:${col}" data-w="${val}%"></div>
+      </div>
+      ${deducts ? `<div class="score-deductions" style="margin-top:6px">${deducts}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const ocol = AuditForge.scores.colorFor(scores.overall);
+
+  const scoreHtml = `
+    <div class="score-overall-card" style="margin-bottom:14px">
+      <div class="score-overall-num" style="color:${ocol}">${scores.overall}</div>
+      <div class="score-overall-detail">
+        <div class="score-overall-title">Overall Score</div>
+        <div class="score-overall-sub">
+          Technical 25% · Content 20% · Accessibility 15% · Schema 15% · Social 10% · AI 15%
+        </div>
+      </div>
+    </div>
+    <div class="score-grid" style="margin-bottom:16px">${dimCards}</div>`;
+
+  // Prepend to wrap without losing issues content
+  const scoreDiv = document.createElement('div');
+  scoreDiv.id = 'scoreBreakdownInline';
+  scoreDiv.innerHTML = scoreHtml;
+  // Insert at top if not already there
+  if (!$('scoreBreakdownInline')) {
+    wrap.insertBefore(scoreDiv, wrap.firstChild);
+  }
+
+  setTimeout(() => {
+    wrap.querySelectorAll('.score-dim-fill').forEach(f => {
+      f.style.width = f.dataset.w || '0%';
+      f.style.transition = 'width 1s ease-out';
+    });
+  }, 100);
+}
+
+/* Hook loadIssues to also render scores */
+(function hookLoadIssues() {
+  const _orig = window.loadIssues;
+  window.loadIssues = function(pg) {
+    _orig(pg);
+    // Prepend score breakdown
+    setTimeout(() => renderScoreBreakdown(pg), 0);
+  };
+})();
+
+/* ══════════════════════════════════════
+   FIX: syncSerp() metaDesc reference
+   The original function checks metaDesc
+   but that element was missing in the
+   original HTML. Now that the element
+   exists this fix ensures it works.
+   ══════════════════════════════════════ */
+(function fixSyncSerp() {
+  // Override syncSerp to be null-safe
+  window.syncSerp = function() {
+    const t = ($('metaTitle') || {}).value || '';
+    const d = ($('metaDesc')  || {}).value || '';
+    const tl = t.length, dl = d.length;
+    const tpx = Math.round(tl * 9.2);
+    const dpx = Math.round(dl * 6.8);
+    const tc = tl < 30 ? 'bad' : tl <= 60 ? 'ok' : tl <= 70 ? 'warn' : 'bad';
+    const dc = dl < 70 ? 'warn' : dl <= 160 ? 'ok' : 'bad';
+
+    setText('titleCC', tl + ' ch');
+    const tcc = $('titleCC'); if (tcc) tcc.className = 'cc ' + tc;
+    const tb  = $('titleBar'); if (tb)  tb.className  = 'pxbar ' + tc;
+    setText('titlePx',  tpx + ' / 600px');
+    setText('titlePxInfo', tpx + 'px');
+
+    setText('descCC',  dl + ' ch');
+    const dcc = $('descCC'); if (dcc) dcc.className = 'cc ' + dc;
+    const db  = $('descBar'); if (db)  db.className  = 'pxbar ' + dc;
+    setText('descPx',  dpx + ' / 920px');
+    setText('descPxInfo', dpx + 'px');
+
+    setText('serpTitle', t || 'Page Title');
+    setText('serpDesc',  d || (dl === 0 ? 'No meta description set.' : ''));
+    setText('serpSite',  curPage ? curPage.url : '');
+  };
+})();
+
+/* ══════════════════════════════════════
+   FIX: loadMeta() — populate metaDesc
+   ══════════════════════════════════════ */
+(function fixLoadMeta() {
+  const _orig = window.loadMeta;
+  window.loadMeta = function(pg) {
+    _orig(pg);
+    const md = $('metaDesc'); if (md) md.value = pg.desc || '';
+    syncSerp();
+  };
+})();
+
+/* ══════════════════════════════════════
+   INIT: call AuditForge._updateRobotsGen
+   on generator input changes if present
+   ══════════════════════════════════════ */
+document.addEventListener('input', function(e) {
+  if (['rgenAgent','rgenDisallow','rgenSitemap','rgenDelay'].includes(e.target.id)) {
+    AuditForge._updateRobotsGen();
+  }
+});
+
+/* ══════════════════════════════════════
+   RE-INIT: ensure schema select still
+   works after DOM additions
+   ══════════════════════════════════════ */
+if (typeof initSchemaSelect === 'function') {
+  initSchemaSelect();
+}
+if (typeof buildSchemaFields === 'function') {
+  buildSchemaFields();
+}
+if (typeof syncSerp === 'function') {
+  syncSerp();
+}
