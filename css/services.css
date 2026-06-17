@@ -601,10 +601,9 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
   .enterprise-badge{font-size:8px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
   .meta-grid,.schema-layout,.ai-layout{grid-template-columns:1fr !important}
   .sum-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-  .grid-head{grid-template-columns:1fr 64px 64px 0 !important;font-size:9px}
-  .grid-row{grid-template-columns:1fr 64px 64px 0 !important;font-size:10px}
-  .grid-head > div:last-child,.grid-row > .acell{display:none}
-  #grid{max-height:none}
+  .grid-head{grid-template-columns:1fr 64px 64px 80px !important;font-size:9px;}
+  .grid-row{grid-template-columns:1fr 64px 64px 80px !important;font-size:10px;}
+   #grid{max-height:none}
   .card{padding:12px}
   .url-input{width:100%}
   .depth-btns{flex-wrap:wrap}
