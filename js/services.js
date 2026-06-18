@@ -2668,7 +2668,7 @@ AuditForge.sitemap = {
 ${urlEntries}
 </urlset>`;
 }
-
+};
 /* ══════════════════════════════════════
    RECOMMENDATIONS ENGINE
    AuditForge.recommendations
