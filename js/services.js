@@ -2642,14 +2642,32 @@ AuditForge.sitemap = {
   },
 
   generateXML(urlList, baseUrl) {
-    const date = new Date().toISOString().split('T')[0];
-    const urlEntries = urlList.map(u => {
-      const loc = u.url || u;
-      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${date}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
-    }).join('\n');
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>`;
-  }
-};
+  const date = new Date().toISOString().split('T')[0];
+
+  const uniqueUrls = [...new Set(
+    urlList.map(u => (u.url || u).replace(/\/$/, ''))
+  )];
+
+  const urlEntries = uniqueUrls.map(loc => {
+    let isHome = false;
+
+    try {
+      isHome = loc === new URL(loc).origin;
+    } catch (e) {}
+
+    return `  <url>
+    <loc>${isHome ? loc + '/' : loc}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${isHome ? '1.00' : '0.90'}</priority>
+  </url>`;
+  }).join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries}
+</urlset>`;
+}
 
 /* ══════════════════════════════════════
    RECOMMENDATIONS ENGINE
