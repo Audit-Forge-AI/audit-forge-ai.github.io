@@ -151,6 +151,20 @@ function resolveStatus(proxyResult, pageUrl){
 /* ══════════════════════════════════════
    LINK EXTRACTOR
    ══════════════════════════════════════ */
+function normalizeUrl(url){
+  try{
+    const u=new URL(url);
+    let path=u.pathname;
+    path=path.replace(/\/index(\.html?)?$/i,'/');
+    path=path.replace(/\.html?$/i,'');
+    if(path.length>1 && path.endsWith('/')){
+      path=path.slice(0,-1);
+    }
+    return u.origin + path;
+  }catch(e){
+    return url;
+  }
+}
 function extractLinks(html, base){
   const doc=new DOMParser().parseFromString(html,'text/html');
   let origin;
@@ -159,14 +173,16 @@ function extractLinks(html, base){
   doc.querySelectorAll('a[href]').forEach(a=>{
     try{
       const abs=new URL(a.getAttribute('href'),base).href;
-      if(abs.startsWith(origin)&&!/[#?]|mailto:|tel:|\.pdf|\.jpg|\.png|\.svg|\.zip/i.test(abs)){
-        out.add(abs.replace(/\/$/,''));
+      if(
+        abs.startsWith(origin) &&
+        !/[#?]|mailto:|tel:|\.pdf|\.jpg|\.png|\.svg|\.zip/i.test(abs)
+      ){
+        out.add(normalizeUrl(abs));
       }
     }catch(e){}
   });
   return [...out];
 }
-
 /* ══════════════════════════════════════
    PARSE HTML (sandbox-safe)
    ══════════════════════════════════════ */
@@ -461,11 +477,11 @@ async function crawl(){
   window._lastSitemap = sitemapData.status==='fulfilled'?sitemapData.value:{found:false};
 
   setStepState('crawl','active');
-  const visited=new Set();
-  const queue=[root.replace(/\/$/,'')];
-  visited.add(queue[0]);
+const visited=new Set();
+const startUrl=normalizeUrl(root);
+const queue=[startUrl];
+visited.add(startUrl);
   let done=0;
-
   while(queue.length&&done<maxP){
     const batch=queue.splice(0,2);
     setProgress('Crawling: '+batch[0].replace(/https?:\/\//,'').slice(0,50),(done/maxP)*100);
@@ -489,7 +505,7 @@ async function crawl(){
       if(!analysis){
         analysis={title:'',desc:'',h1s:[],missingAlt:0,headingNodes:[],imgData:[],hasSchema:0,hasSemantic:0,hasLists:0,hasTables:0,score:0,aiScore:0,url:pageUrl,keywords:null,readability:null,internalLinks:[]};
       }
-      const pg={...analysis,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:pageUrl,id:'pg'+Date.now()+Math.random()};
+      const pg={...analysis,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random()};
       pages.push(pg); done++;
       addRow(pg); updateStats();
     }));
