@@ -36,7 +36,13 @@ let pages = [], maxP = 10, crawling = false, curPage = null;
 function showPanel(id){
   $$('.panel').forEach(p=>p.classList.remove('active'));
   $$('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pan=$('panel-'+id); if(pan) pan.classList.add('active');
+  const pan=$('panel-'+id); 
+  if(pan) {
+    pan.classList.add('active');
+    // Ensure panel is visible (flex for hero)
+    if(id === 'hero') pan.style.display = 'flex';
+    else pan.style.display = 'flex';
+  }
   const nav=document.querySelector(`.nav-item[data-panel="${id}"]`);
   if(nav) nav.classList.add('active');
 }
@@ -3463,3 +3469,60 @@ if (typeof buildSchemaFields === 'function') {
 if (typeof syncSerp === 'function') {
   syncSerp();
 }
+/* ══════════════════════════════════════
+   HERO PANEL INITIALIZATION
+   Display hero by default, hide on audit start
+   ══════════════════════════════════════ */
+
+(function initHeroPanel() {
+  // Show hero panel on page load
+  const heroPan = $('panel-hero');
+  if (heroPan) {
+    showPanel('hero');
+    // Wire start audit buttons
+    const crawlBtn = $('startCrawlBtn');
+    if (crawlBtn) {
+      crawlBtn.addEventListener('click', () => {
+        setMode('crawl');
+        showPanel('crawler');
+        const urlInput = $('urlInput');
+        if (urlInput) urlInput.focus();
+      });
+    }
+    const pasteBtn = $('startPasteBtn');
+    if (pasteBtn) {
+      pasteBtn.addEventListener('click', () => {
+        setMode('paste');
+        showPanel('crawler');
+        const pasteHtml = $('pasteHtml');
+        if (pasteHtml) pasteHtml.focus();
+      });
+    }
+  }
+
+  // Auto-hide hero when user starts crawling
+  const origCrawl = window.crawl || crawl;
+  window.crawl = function() {
+    const heroPan = $('panel-hero');
+    if (heroPan) heroPan.style.display = 'none';
+    return origCrawl.apply(this, arguments);
+  };
+
+  // Auto-hide hero when paste audit runs
+  const origRunPaste = window.runPasteAudit;
+  window.runPasteAudit = function() {
+    const heroPan = $('panel-hero');
+    if (heroPan) heroPan.style.display = 'none';
+    return origRunPaste.apply(this, arguments);
+  };
+
+  // Return to hero when nav item is clicked (and no data exists)
+  const origShowPanel = window.showPanel;
+  window.showPanel = function(id) {
+    if (id === 'hero' && !pages.length) {
+      const heroPan = $('panel-hero');
+      if (heroPan) heroPan.style.display = 'flex';
+    }
+    return origShowPanel.apply(this, arguments);
+  };
+})();
