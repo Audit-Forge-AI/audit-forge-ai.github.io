@@ -41,10 +41,27 @@
   "name": "AuditForge AI",
   "url": "https://audit-forge-ai.github.io",
   "logo": "https://audit-forge-ai.github.io/favicon/auditforgeai-logo-512.svg",
-  "description": "AuditForge AI is a free, open, AI-assisted website auditing platform that scans public websites for SEO, accessibility, performance, security, content quality, and AI visibility issues.",
-  "sameAs": [],
+  "description": "AuditForge AI is a free, open website auditing platform that scans public websites for SEO, accessibility, performance, security, content quality, and AI visibility issues. Checks are aligned with Google Search Central, W3C WCAG 2.2, Schema.org, and Google PageSpeed Insights.",
+  "founder": {
+    "@type": "Person",
+    "name": "Sourav Bagchi"
+  },
   "foundingDate": "2024",
-  "knowsAbout": ["SEO Auditing", "Web Accessibility", "Core Web Vitals", "Structured Data", "AI Visibility", "Website Performance"]
+  "knowsAbout": [
+    "SEO Auditing",
+    "Web Accessibility",
+    "WCAG 2.2",
+    "Core Web Vitals",
+    "Largest Contentful Paint",
+    "Interaction to Next Paint",
+    "Cumulative Layout Shift",
+    "Structured Data",
+    "JSON-LD",
+    "Schema.org",
+    "AI Visibility",
+    "Website Performance",
+    "Google Search Central"
+  ]
 }
 </script>
 <script type="application/ld+json">
@@ -119,6 +136,66 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://audit-forge-ai.github.io/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "About",
+      "item": "https://audit-forge-ai.github.io/about"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DefinedTermSet",
+  "name": "AuditForge AI — Key Terms",
+  "url": "https://audit-forge-ai.github.io/about",
+  "hasDefinedTerm": [
+    {
+      "@type": "DefinedTerm",
+      "name": "SEO Audit",
+      "description": "An SEO audit is a structured review of a website's technical health, content quality, and search engine visibility that identifies issues preventing pages from ranking and provides prioritised steps to resolve them."
+    },
+    {
+      "@type": "DefinedTerm",
+      "name": "AI Visibility",
+      "description": "AI visibility is the likelihood that a webpage's content will be discovered, correctly understood, and cited by AI-powered search systems. It is measured by structured data completeness, definition-style paragraphs, authorship clarity, and entity consistency."
+    },
+    {
+      "@type": "DefinedTerm",
+      "name": "Website Accessibility",
+      "description": "Website accessibility is the practice of designing and building web pages so that people with visual, motor, auditory, or cognitive disabilities can use them, as defined by W3C WCAG 2.2."
+    },
+    {
+      "@type": "DefinedTerm",
+      "name": "Structured Data",
+      "description": "Structured data is machine-readable information added to a webpage in JSON-LD format using the Schema.org vocabulary that tells search engines what the content means, not just what it says."
+    },
+    {
+      "@type": "DefinedTerm",
+      "name": "Core Web Vitals",
+      "description": "Core Web Vitals are three performance metrics defined by Google: Largest Contentful Paint (LCP) measuring loading speed, Interaction to Next Paint (INP) measuring responsiveness, and Cumulative Layout Shift (CLS) measuring visual stability."
+    },
+    {
+      "@type": "DefinedTerm",
+      "name": "Content Quality",
+      "description": "Content quality refers to how well a webpage serves the reader's intent, assessed by measuring word count, reading level, keyword concentration, heading structure, and the presence of answer-ready content such as definitions and FAQ blocks."
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <header>
@@ -137,19 +214,30 @@
 <section class="hero" aria-labelledby="page-title">
     <div class="kicker">// About</div>
     <h1 id="page-title">We audit websites — <em>automatically.</em></h1>
-    <p class="lead">AuditForge AI is an open, AI-assisted crawler that scans any public website for SEO, accessibility, performance and security issues — and gives you a fix for every finding. Totally free while we're in beta.</p>
-  </section>
+<p class="lead">AuditForge AI is a free, open website auditing platform. It crawls any public website and scores it across six categories: SEO, Accessibility, Performance, Security, Content Quality, and AI Visibility. Every finding links to a fix. No paywall, no account required.</p>  </section>
 
   <article>
 
 <section aria-labelledby="how-it-works-heading" class="content-block">
       <div class="kicker">// How it works</div>
       <h2 id="how-it-works-heading">How it works</h2>
-      <div class="grid">
-        <div class="card"><h3>Paste a URL</h3><p>No accounts, no installs. Drop a domain into the crawler and it walks the site for you — automatically discovering pages and assets.</p></div>
-        <div class="card"><h3>Get a verdict</h3><p>Every page is scored across multiple audit engines — SEO, Accessibility, Performance, Security, Content Quality, and AI Visibility.</p></div>
-        <div class="card"><h3>Ship a fix</h3><p>Each issue ships with a concrete, prioritised recommendation tied to the relevant standard — not a vague warning.</p></div>
-        <div class="card"><h3>Built in the open</h3><p>An independent project focused on making website auditing transparent and free for everyone. Use it as much as you want.</p></div>
+<div class="grid">
+        <div class="card">
+          <h3>Paste a URL</h3>
+          <p>No accounts, no installs. Drop a domain into the crawler and it walks the site automatically — discovering pages and assets without any setup.</p>
+        </div>
+        <div class="card">
+          <h3>Get a verdict</h3>
+          <p>Every page is scored across six audit engines: SEO, Accessibility, Performance, Security, Content Quality, and AI Visibility. Each engine produces a weighted score tied to a public standard.</p>
+        </div>
+        <div class="card">
+          <h3>Ship a fix</h3>
+          <p>Each issue ships with a concrete, prioritised recommendation mapped to the relevant standard — not a vague warning or an error code.</p>
+        </div>
+        <div class="card">
+          <h3>Built in the open</h3>
+          <p>AuditForge AI is an independent project. The audit methodology, scoring weights, and referenced standards are documented publicly so any score is reproducible and auditable.</p>
+        </div>
       </div>
     </section>
 
@@ -158,21 +246,25 @@
       <h2 id="what-we-audit-heading">What the platform audits</h2>
       <div class="engines">
 
+<div class="engines">
+
         <div class="engine">
           <div class="tag">SEO</div>
           <h3>Search visibility</h3>
-          <p>A systematic review of every factor affecting ranking — title tags, meta descriptions, canonical URLs, heading hierarchy, internal linking, and keyword relevance.</p>
+          <p>AuditForge AI checks every factor that affects how search engines rank a page. This includes title tags, meta descriptions, canonical URLs, heading hierarchy, internal linking, and keyword relevance.</p>
+          <p>All checks follow <a href="https://developers.google.com/search/docs" target="_blank" rel="noopener noreferrer">Google Search Central</a> guidelines.</p>
           <ul>
-            <li>Aligned with <a href="https://developers.google.com/search/docs" target="_blank" rel="noopener noreferrer">Google Search Central</a> guidelines</li>
-            <li>Checks heading structure and internal link graph</li>
-            <li>Flags missing or duplicate meta elements</li>
+            <li>Heading structure and internal link graph</li>
+            <li>Missing or duplicate meta elements</li>
+            <li>Canonical and robots directives</li>
           </ul>
         </div>
 
         <div class="engine">
           <div class="tag">AI Visibility</div>
           <h3>AI citation readiness</h3>
-          <p>Measures how well content is structured for large language models, answer engines, and AI-powered search to accurately understand, extract, and cite it.</p>
+          <p>AI citation readiness measures how well a page is structured for large language models and AI-powered search engines to understand, extract, and cite its content.</p>
+          <p>Pages that score well here are more likely to appear in AI Overviews and answer engines.</p>
           <ul>
             <li>Structured data and entity signal checks</li>
             <li>Definition-style paragraphs and FAQ coverage</li>
@@ -183,7 +275,8 @@
         <div class="engine">
           <div class="tag">Accessibility</div>
           <h3>Inclusive usability</h3>
-          <p>Tests how usable the site is for people with visual, motor, auditory, or cognitive disabilities — checked against <a href="https://www.w3.org/WAI/standards-guidelines/wcag/" target="_blank" rel="noopener noreferrer">W3C WCAG 2.2</a>.</p>
+          <p>Accessibility checks test whether the site works for people with visual, motor, auditory, or cognitive disabilities.</p>
+          <p>Checks are validated against <a href="https://www.w3.org/WAI/standards-guidelines/wcag/" target="_blank" rel="noopener noreferrer">W3C WCAG 2.2</a> success criteria.</p>
           <ul>
             <li>Colour contrast ratios</li>
             <li>Image alternative text</li>
@@ -194,21 +287,23 @@
         <div class="engine">
           <div class="tag">Structured Data</div>
           <h3>Schema markup</h3>
-          <p>Detects missing, invalid, or incomplete <a href="https://schema.org" target="_blank" rel="noopener noreferrer">Schema.org</a> JSON-LD that helps search engines and AI systems understand what each page is about.</p>
+          <p>Structured data checks detect missing, invalid, or incomplete JSON-LD that prevents search engines and AI systems from understanding what each page is about.</p>
+          <p>Validation follows <a href="https://schema.org" target="_blank" rel="noopener noreferrer">Schema.org</a> type and property definitions.</p>
           <ul>
-            <li>Validates type and property definitions</li>
-            <li>Recommends appropriate schema for each page type</li>
-            <li>Flags malformed or incomplete markup</li>
+            <li>Type and property validation</li>
+            <li>Appropriate schema recommendations per page type</li>
+            <li>Malformed or incomplete markup flags</li>
           </ul>
         </div>
 
         <div class="engine">
           <div class="tag">Performance</div>
           <h3>Core Web Vitals</h3>
-          <p>Google's real-world performance metrics — Largest Contentful Paint, Interaction to Next Paint, and Cumulative Layout Shift — benchmarked via <a href="https://pagespeed.web.dev" target="_blank" rel="noopener noreferrer">Google PageSpeed Insights</a>.</p>
+          <p>Performance is benchmarked using Google's Core Web Vitals: Largest Contentful Paint (LCP), Interaction to Next Paint (INP), and Cumulative Layout Shift (CLS).</p>
+          <p>Thresholds are sourced from <a href="https://pagespeed.web.dev" target="_blank" rel="noopener noreferrer">Google PageSpeed Insights</a>.</p>
           <ul>
             <li>LCP, INP, and CLS thresholds</li>
-            <li>Measures real user experience, not lab proxies</li>
+            <li>Real user experience measurement</li>
             <li>Actionable fixes per failing metric</li>
           </ul>
         </div>
@@ -220,25 +315,68 @@
       <h2 id="methodology-heading">Audit methodology</h2>
       <div class="grid">
 
+<div class="grid">
+
         <div class="card">
           <h3>Crawl &amp; parse</h3>
-          <p>The crawler visits every publicly accessible page of a submitted domain, parses the HTML, evaluates assets, and runs a battery of checks across six audit categories. Findings are weighted by impact and aggregated into a site-level score. Each finding links to the exact page and element where the issue was detected, mapped to a specific remediation step.</p>
+          <p>The crawler visits every publicly accessible page of a submitted domain. It parses HTML, evaluates assets, and runs checks across six audit categories.</p>
+          <p>Findings are weighted by impact and aggregated into a site-level score. Each finding links to the exact page element and maps to a specific remediation step.</p>
         </div>
 
         <div class="card">
           <h3>External standards</h3>
-          <p>Scores are calibrated against published benchmarks — SEO checks follow Google Search Central documentation, accessibility checks follow WCAG 2.2, performance checks reference PageSpeed Insights thresholds, and structured data validation follows Schema.org specifications. Every score reflects a real, externally defined standard, not an arbitrary internal metric.</p>
+          <p>Every score reflects an externally published standard. SEO checks follow <a href="https://developers.google.com/search/docs" target="_blank" rel="noopener noreferrer">Google Search Central</a> documentation. Accessibility checks follow <a href="https://www.w3.org/WAI/standards-guidelines/wcag/" target="_blank" rel="noopener noreferrer">W3C WCAG 2.2</a>. Performance checks use <a href="https://pagespeed.web.dev" target="_blank" rel="noopener noreferrer">Google PageSpeed Insights</a> thresholds. Structured data validation follows <a href="https://schema.org" target="_blank" rel="noopener noreferrer">Schema.org</a> type definitions.</p>
+          <p>No score is an arbitrary internal metric.</p>
         </div>
 
         <div class="card">
           <h3>Content quality signals</h3>
-          <p>Content quality is assessed by measuring word count, reading level, keyword concentration, heading structure, and the presence of answer-ready content such as definitions and FAQ blocks. These signals matter both for traditional search ranking and for AI citation likelihood.</p>
+          <p>Content quality is assessed by measuring word count, reading level, keyword concentration, and heading structure.</p>
+          <p>The presence of answer-ready content — definitions and FAQ blocks — is also scored. These signals affect both traditional search rankings and AI citation likelihood.</p>
         </div>
 
       </div>
     </section>
-<section aria-labelledby="who-uses-heading" class="content-block">
-      <div class="kicker">// Use Cases</div>
+<section aria-labelledby="standards-heading" class="content-block">
+  <div class="kicker">// Standards We Follow</div>
+  <h2 id="standards-heading">Standards and references</h2>
+  <p class="intro">Every AuditForge AI check is mapped to a published, externally maintained standard. These are the primary references the platform audits against.</p>
+
+  <div class="engines">
+
+    <div class="engine">
+      <div class="tag">SEO</div>
+      <h3><a href="https://developers.google.com/search/docs" target="_blank" rel="noopener noreferrer">Google Search Central</a></h3>
+      <p>Google's official documentation covering how Search crawls, indexes, and ranks content.</p>
+      <p>AuditForge AI's SEO checks — including title tags, meta descriptions, canonical URLs, and heading structure — are validated against these guidelines.</p>
+    </div>
+
+    <div class="engine">
+      <div class="tag">Accessibility</div>
+      <h3><a href="https://www.w3.org/WAI/standards-guidelines/wcag/" target="_blank" rel="noopener noreferrer">W3C WCAG 2.2</a></h3>
+      <p>The Web Content Accessibility Guidelines, version 2.2, published by the World Wide Web Consortium (W3C).</p>
+      <p>WCAG 2.2 defines success criteria for colour contrast, alternative text, keyboard navigation, ARIA roles, and form labels. AuditForge AI tests against these criteria on every crawled page.</p>
+    </div>
+
+    <div class="engine">
+      <div class="tag">Performance</div>
+      <h3><a href="https://pagespeed.web.dev" target="_blank" rel="noopener noreferrer">Google PageSpeed Insights</a></h3>
+      <p>Google's tool for measuring Core Web Vitals: Largest Contentful Paint (LCP), Interaction to Next Paint (INP), and Cumulative Layout Shift (CLS).</p>
+      <p>AuditForge AI benchmarks page performance against the thresholds published in the <a href="https://web.dev/explore/vitals" target="_blank" rel="noopener noreferrer">Web Vitals documentation</a>.</p>
+    </div>
+
+    <div class="engine">
+      <div class="tag">Structured Data</div>
+      <h3><a href="https://schema.org" target="_blank" rel="noopener noreferrer">Schema.org</a></h3>
+      <p>The shared vocabulary for structured data markup, maintained collaboratively by Google, Bing, Yahoo, and Yandex.</p>
+      <p>AuditForge AI validates JSON-LD against Schema.org type definitions and flags missing or incorrectly typed properties that reduce eligibility for rich results.</p>
+    </div>
+
+  </div>
+</section>
+
+<section aria-labelledby="who-uses-heading" class="content-block">     
+  <div class="kicker">// Use Cases</div>
       <h2 id="who-uses-heading">Who uses AuditForge AI</h2>
       <p class="intro">The audit tool is designed for anyone who publishes on the web and wants an honest, technical picture of how their site performs. In practice, that includes:</p>
       <div class="engines">
