@@ -3474,55 +3474,28 @@ if (typeof syncSerp === 'function') {
    Display hero by default, hide on audit start
    ══════════════════════════════════════ */
 
+REPLACE
 (function initHeroPanel() {
-  // Show hero panel on page load
-  const heroPan = $('panel-hero');
-  if (heroPan) {
-    showPanel('hero');
-    // Wire start audit buttons
-    const crawlBtn = $('startCrawlBtn');
-    if (crawlBtn) {
-      crawlBtn.addEventListener('click', () => {
-        setMode('crawl');
-        showPanel('crawler');
-        const urlInput = $('urlInput');
-        if (urlInput) urlInput.focus();
-      });
-    }
-    const pasteBtn = $('startPasteBtn');
-    if (pasteBtn) {
-      pasteBtn.addEventListener('click', () => {
-        setMode('paste');
-        showPanel('crawler');
-        const pasteHtml = $('pasteHtml');
-        if (pasteHtml) pasteHtml.focus();
-      });
-    }
+  // Show crawler panel on page load — hero demoted to About/docs
+  showPanel('crawler');
+
+  // Wire start audit buttons inside hero/about panel if navigated to
+  const crawlBtn = $('startCrawlBtn');
+  if (crawlBtn) {
+    crawlBtn.addEventListener('click', () => {
+      setMode('crawl');
+      showPanel('crawler');
+      const urlInput = $('urlInput');
+      if (urlInput) urlInput.focus();
+    });
   }
-
-  // Auto-hide hero when user starts crawling
-  const origCrawl = window.crawl || crawl;
-  window.crawl = function() {
-    const heroPan = $('panel-hero');
-    if (heroPan) heroPan.style.display = 'none';
-    return origCrawl.apply(this, arguments);
-  };
-
-  // Auto-hide hero when paste audit runs
-  const origRunPaste = window.runPasteAudit;
-  window.runPasteAudit = function() {
-    const heroPan = $('panel-hero');
-    if (heroPan) heroPan.style.display = 'none';
-    return origRunPaste.apply(this, arguments);
-  };
-
-  // Return to hero when nav item is clicked (and no data exists)
-  const origShowPanel = window.showPanel;
-  window.showPanel = function(id) {
-    if (id === 'hero' && !pages.length) {
-      const heroPan = $('panel-hero');
-      if (heroPan) heroPan.style.display = 'flex';
-    }
-    return origShowPanel.apply(this, arguments);
-  };
+  const pasteBtn = $('startPasteBtn');
+  if (pasteBtn) {
+    pasteBtn.addEventListener('click', () => {
+      setMode('paste');
+      showPanel('crawler');
+      const pasteHtml = $('pasteHtml');
+      if (pasteHtml) pasteHtml.focus();
+    });
+  }
 })();
