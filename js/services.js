@@ -3469,33 +3469,3 @@ if (typeof buildSchemaFields === 'function') {
 if (typeof syncSerp === 'function') {
   syncSerp();
 }
-/* ══════════════════════════════════════
-   HERO PANEL INITIALIZATION
-   Display hero by default, hide on audit start
-   ══════════════════════════════════════ */
-
-REPLACE
-(function initHeroPanel() {
-  // Show crawler panel on page load — hero demoted to About/docs
-  showPanel('crawler');
-
-  // Wire start audit buttons inside hero/about panel if navigated to
-  const crawlBtn = $('startCrawlBtn');
-  if (crawlBtn) {
-    crawlBtn.addEventListener('click', () => {
-      setMode('crawl');
-      showPanel('crawler');
-      const urlInput = $('urlInput');
-      if (urlInput) urlInput.focus();
-    });
-  }
-  const pasteBtn = $('startPasteBtn');
-  if (pasteBtn) {
-    pasteBtn.addEventListener('click', () => {
-      setMode('paste');
-      showPanel('crawler');
-      const pasteHtml = $('pasteHtml');
-      if (pasteHtml) pasteHtml.focus();
-    });
-  }
-})();
