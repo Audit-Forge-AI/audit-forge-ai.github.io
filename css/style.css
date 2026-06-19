@@ -341,6 +341,7 @@ footer .heart {
     text-decoration: underline;
     opacity: 0.9;
 }
+}
     /* ==========================
    CONTENT SECTIONS
 ========================== */
@@ -555,5 +556,4 @@ footer .heart {
     .faq-answer{
         padding:0 18px 18px;
     }
-}
 }
