@@ -25,13 +25,98 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-  <script type="application/ld+json">
+<script type="application/ld+json">
 {
   "@context":"https://schema.org",
   "@type":"AboutPage",
   "name":"About AuditForge AI",
   "url":"https://audit-forge-ai.github.io/about",
   "description":"Learn about AuditForge AI and its mission."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "AuditForge AI",
+  "url": "https://audit-forge-ai.github.io",
+  "logo": "https://audit-forge-ai.github.io/favicon/auditforgeai-logo-512.svg",
+  "description": "AuditForge AI is a free, open, AI-assisted website auditing platform that scans public websites for SEO, accessibility, performance, security, content quality, and AI visibility issues.",
+  "sameAs": [],
+  "foundingDate": "2024",
+  "knowsAbout": ["SEO Auditing", "Web Accessibility", "Core Web Vitals", "Structured Data", "AI Visibility", "Website Performance"]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is AuditForge AI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AuditForge AI is a free, AI-assisted website auditing platform that crawls any public website and scores it across SEO, accessibility, performance, security, content quality, and AI visibility. It provides a concrete recommendation for every issue it finds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is AuditForge AI free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. AuditForge AI is completely free to use while in beta. No account, subscription, or credit card is required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does AuditForge AI check?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The platform checks six core areas: SEO (meta tags, headings, canonical URLs), Accessibility (WCAG compliance, alt text, contrast), Performance (Core Web Vitals, page speed), Security (HTTPS, headers), Content Quality (readability, thin content, keyword use), and AI Visibility (structured data, entity signals, FAQ coverage, definition-style content)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does AuditForge AI work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You paste a URL into the crawler, and the tool walks the site automatically. Each page is analysed across multiple audit engines. Results are scored and every finding is paired with a specific, actionable fix — not just a warning."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is AI visibility?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AI visibility is the degree to which a website's content is structured and presented in a way that AI systems — such as large language models, AI search engines, and answer engines — can accurately understand, cite, and surface. Factors include structured data, FAQ sections, definition-style paragraphs, and clear entity signals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who should use AuditForge AI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AuditForge AI is designed for website owners, developers, content creators, SEO professionals, and small businesses who want a clear, jargon-free picture of how their site performs across SEO, accessibility, and AI readiness — without paying for an enterprise tool."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can AuditForge AI improve my SEO?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The audit tool identifies specific SEO issues — missing meta descriptions, broken heading hierarchies, thin content, absent structured data, and more — and provides prioritised recommendations aligned with Google Search Central best practices."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How often should I run a website audit?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For most sites, running an audit after any significant content update, redesign, or after publishing new pages is a good practice. High-traffic or frequently updated sites benefit from monthly audits to catch regressions in Core Web Vitals, accessibility, or structured data."
+      }
+    }
+  ]
 }
 </script>
 </head>
@@ -53,12 +138,89 @@
   <h1>We audit websites — <em>automatically.</em></h1>
   <p class="lead">AuditForge AI is an open, AI-assisted crawler that scans any public website for SEO, accessibility, performance and security issues — and gives you a fix for every finding. Totally free while we're in beta.</p>
 
-  <div class="grid">
-    <div class="card"><h3>Paste a URL</h3><p>No accounts, no installs. Drop a domain into the crawler and we walk the site for you.</p></div>
-    <div class="card"><h3>Get a verdict</h3><p>Every page is scored across multiple engines — SEO, A11y, Performance, Security, Content.</p></div>
-    <div class="card"><h3>Ship a fix</h3><p>Each issue ships with a concrete recommendation, not a vague warning.</p></div>
-    <div class="card"><h3>Built in the open</h3><p>Built as an independent project focused on making website auditing accessible, transparent, and free for everyone.Use it as much as you want.</p></div>
-  </div>
+ <section aria-labelledby="how-it-works-heading">
+    <h2 id="how-it-works-heading">How it works</h2>
+    <div class="grid">
+      <div class="card"><h3>Paste a URL</h3><p>No accounts, no installs. Drop a domain into the crawler and it walks the site for you — automatically discovering pages and assets.</p></div>
+      <div class="card"><h3>Get a verdict</h3><p>Every page is scored across multiple audit engines — SEO, Accessibility, Performance, Security, Content Quality, and AI Visibility.</p></div>
+      <div class="card"><h3>Ship a fix</h3><p>Each issue ships with a concrete, prioritised recommendation tied to the relevant standard — not a vague warning.</p></div>
+      <div class="card"><h3>Built in the open</h3><p>An independent project focused on making website auditing transparent and free for everyone. Use it as much as you want.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="what-we-audit-heading">
+    <h2 id="what-we-audit-heading">What the platform audits</h2>
+    <p>An SEO audit is a systematic review of the factors that affect a website's visibility in search engines. AuditForge AI performs this review automatically, checking title tags, meta descriptions, canonical URLs, heading hierarchy, internal linking, and keyword relevance — all aligned with <a href="https://developers.google.com/search/docs" target="_blank" rel="noopener noreferrer">Google Search Central</a> guidelines.</p>
+    <p>AI visibility is the degree to which a website's content is structured so that AI systems — including large language models, answer engines, and AI-powered search — can accurately understand, extract, and cite it. High AI visibility depends on structured data, clear entity signals, definition-style paragraphs, FAQ coverage, and unambiguous authorship. The audit tool measures and scores each of these signals on every page it crawls.</p>
+    <p>Website accessibility is how usable a site is for people with visual, motor, auditory, or cognitive disabilities. The platform tests against the <a href="https://www.w3.org/WAI/standards-guidelines/wcag/" target="_blank" rel="noopener noreferrer">W3C Web Content Accessibility Guidelines (WCAG)</a>, checking colour contrast, image alternative text, keyboard navigation, ARIA roles, and form labels.</p>
+    <p>Structured data is machine-readable metadata — typically written in JSON-LD and defined at <a href="https://schema.org" target="_blank" rel="noopener noreferrer">Schema.org</a> — that helps search engines and AI systems understand what a page is about. The website auditor detects missing, invalid, or incomplete schema markup and recommends the appropriate types for each page.</p>
+    <p>Core Web Vitals are Google's set of real-world performance metrics — Largest Contentful Paint, Interaction to Next Paint, and Cumulative Layout Shift — that measure how fast and stable a page feels to real users. Results are benchmarked against data from <a href="https://pagespeed.web.dev" target="_blank" rel="noopener noreferrer">Google PageSpeed Insights</a>.</p>
+  </section>
+
+  <section aria-labelledby="methodology-heading">
+    <h2 id="methodology-heading">Audit methodology</h2>
+    <p>The crawler visits each publicly accessible page of a submitted domain, parses the HTML, evaluates assets, and runs a battery of checks across six audit categories. Findings are weighted by impact and aggregated into a site-level score. Each finding links directly to the page and element where the issue was detected, and maps to a specific remediation step.</p>
+    <p>Scores are calibrated against industry standards: SEO checks follow Google Search Central documentation, accessibility checks follow WCAG 2.2, performance checks reference PageSpeed Insights thresholds, and structured data validation follows Schema.org specifications. This means every score reflects a real, externally defined benchmark — not an arbitrary internal metric.</p>
+    <p>Content quality is assessed by measuring word count, reading level, keyword concentration, heading structure, and the presence of answer-ready content such as definitions and FAQ blocks. These signals matter both for traditional search ranking and for AI citation likelihood.</p>
+  </section>
+
+  <section aria-labelledby="who-uses-heading">
+    <h2 id="who-uses-heading">Who uses AuditForge AI</h2>
+    <p>The audit tool is designed for anyone who publishes on the web and wants an honest, technical picture of how their site performs. In practice, that includes:</p>
+    <article>
+      <h3>Website owners and small businesses</h3>
+      <p>Owners who want to understand why their site isn't ranking or converting, without decoding a spreadsheet of raw Lighthouse data. The platform translates technical findings into plain-language fixes with clear priority levels.</p>
+    </article>
+    <article>
+      <h3>Developers and engineers</h3>
+      <p>Developers who need a fast, automated baseline before launching a new site or after a major refactor. The crawler surfaces regressions in structured data, heading hierarchy, or Core Web Vitals that are easy to miss in code review.</p>
+    </article>
+    <article>
+      <h3>SEO professionals and content teams</h3>
+      <p>Practitioners who want to cross-check their work against an independent tool that covers both traditional SEO signals and emerging AI visibility factors — in a single pass, without stitching together five separate tools.</p>
+    </article>
+    <aside>
+      <p><strong>Why it's free:</strong> The platform is an independent open project. The goal is to make professional-grade auditing accessible to sites that can't afford enterprise crawlers, and to learn what signals matter most for AI visibility as that landscape evolves.</p>
+    </aside>
+  </section>
+
+  <section aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently asked questions</h2>
+    <dl>
+      <div>
+        <dt><h3>What is AuditForge AI?</h3></dt>
+        <dd><p>AuditForge AI is a free, AI-assisted website auditing platform that crawls any public website and scores it across SEO, accessibility, performance, security, content quality, and AI visibility. It provides a concrete recommendation for every issue it finds — with no account or installation required.</p></dd>
+      </div>
+      <div>
+        <dt><h3>Is AuditForge AI free to use?</h3></dt>
+        <dd><p>Yes. The platform is completely free while in beta. No subscription, credit card, or account is required. Paste a URL and run an audit immediately.</p></dd>
+      </div>
+      <div>
+        <dt><h3>What does it check?</h3></dt>
+        <dd><p>The website auditor checks six core areas: SEO (meta tags, headings, canonical URLs, internal links), Accessibility (WCAG 2.2 compliance, alt text, contrast ratios), Performance (Core Web Vitals via PageSpeed Insights data), Security (HTTPS, security headers), Content Quality (readability, thin content, keyword balance), and AI Visibility (structured data completeness, entity signals, FAQ coverage, definition-style content).</p></dd>
+      </div>
+      <div>
+        <dt><h3>How does it work?</h3></dt>
+        <dd><p>You submit a URL. The crawler walks the site, discovers linked pages, and runs each page through multiple audit engines simultaneously. Results are scored, ranked by severity, and presented with specific fixes — each tied to the relevant standard or guideline.</p></dd>
+      </div>
+      <div>
+        <dt><h3>What is AI visibility, and why does it matter?</h3></dt>
+        <dd><p>AI visibility is how well a website's content can be understood, extracted, and cited by AI systems such as large language models and AI-powered search engines. It depends on structured data markup (Schema.org), clear entity references, answer-ready paragraph structures, and FAQ sections. As AI-driven search grows, AI visibility is becoming as important as traditional SEO for organic traffic.</p></dd>
+      </div>
+      <div>
+        <dt><h3>Who should use this tool?</h3></dt>
+        <dd><p>AuditForge AI is useful for website owners, developers, SEO professionals, content teams, and small businesses — anyone who wants a clear, jargon-free audit without paying for an enterprise platform. It is particularly valuable for teams who want to check both classic SEO health and emerging AI readiness in a single audit.</p></dd>
+      </div>
+      <div>
+        <dt><h3>Can it improve my SEO?</h3></dt>
+        <dd><p>Yes. The audit tool identifies specific, actionable SEO issues — missing meta descriptions, broken heading hierarchies, thin content, absent or invalid structured data, poor internal linking, and more. Each finding includes a prioritised fix aligned with <a href="https://developers.google.com/search/docs" target="_blank" rel="noopener noreferrer">Google Search Central</a> best practices. Addressing the findings typically leads to measurable improvements in crawlability and search visibility.</p></dd>
+      </div>
+      <div>
+        <dt><h3>How often should I audit my website?</h3></dt>
+        <dd><p>For most sites, running an audit after significant content changes, a redesign, or new page deployments is a sound practice. High-traffic or frequently updated sites benefit from monthly audits to detect regressions in Core Web Vitals, accessibility compliance, or structured data validity before they affect rankings or user experience.</p></dd>
+      </div>
+    </dl>
+  </section>
 </main>
 <footer>
   © <span id="y"></span> AuditForge AI — Made with
