@@ -149,8 +149,9 @@ function resolveStatus(proxyResult, pageUrl){
   if(realStatus===401) return {status:401,  label:'401 Auth',        cls:'soth'};
   if(realStatus>=500)  return {status:realStatus, label:realStatus+' Server Err', cls:'soth'};
   if(realStatus>=400)  return {status:realStatus, label:realStatus+' Error',      cls:'s404'};
-  if(realStatus>=300)  return {status:realStatus, label:realStatus+' Redirect',   cls:'soth'};
-  if(!html||html.length<150) return {status:0, label:'Proxy Blocked', cls:'soth'};
+  if(realStatus===301) return {status:301, label:'301 Redirect', cls:'soth'};
+  if(realStatus===302) return {status:302, label:'302 Redirect', cls:'soth'};
+  if(realStatus>=300)  return {status:realStatus, label:realStatus+' Redirect', cls:'soth'};  if(!html||html.length<150) return {status:0, label:'Proxy Blocked', cls:'soth'};
   return {status:200, label:'200 OK', cls:'s200'};
 }
 
@@ -161,16 +162,21 @@ function normalizeUrl(url){
   try{
     const u=new URL(url);
     let path=u.pathname;
+    // Normalize index pages to directory form
     path=path.replace(/\/index(\.html?)?$/i,'/');
-    path=path.replace(/\.html?$/i,'');
+    // Only strip .html if it's not a meaningful page identifier
+    // (preserve .html for sites that use it as their canonical form)
+    // Instead, just lowercase and remove trailing slash for dedup
     if(path.length>1 && path.endsWith('/')){
       path=path.slice(0,-1);
     }
+    // Lowercase path for deduplication only, preserve original case in stored URL
     return u.origin + path;
   }catch(e){
     return url;
   }
 }
+
 function extractLinks(html, base){
   const doc=new DOMParser().parseFromString(html,'text/html');
   let origin;
@@ -303,12 +309,15 @@ function analyzeKeywords(bodyText, title, h1, url){
     'more','all','any','some','what','which','who','how','when','where'
   ]);
 
+// Use raw word count for density to avoid inflated percentages from stop-word filtering
+  const rawWordCount = bodyText.split(/\s+/).filter(Boolean).length || 1;
+
   const words=bodyText.toLowerCase()
     .replace(/[^a-z0-9\s]/g,' ')
     .split(/\s+/)
     .filter(w=>w.length>2 && !stopWords.has(w));
 
-  const totalWords=words.length||1;
+  const totalWords=rawWordCount;
   const freq={};
   words.forEach(w=>{ freq[w]=(freq[w]||0)+1; });
 
@@ -351,13 +360,17 @@ function analyzeReadability(text){
   const avgParaLength=words.length/Math.max(1,paragraphs.length);
 
   // Syllable count (simplified)
-  function countSyllables(word){
+ function countSyllables(word){
     word=word.toLowerCase().replace(/[^a-z]/g,'');
     if(!word.length) return 1;
+    // Long technical tokens (code, URLs, identifiers) skew scores — cap their syllable count
+    if(word.length > 20) return 3;
     const vowels=word.match(/[aeiouy]+/g)||[];
     let count=vowels.length;
     if(word.endsWith('e')&&count>1) count--;
-    return Math.max(1,count);
+    // Handle silent e at end and common patterns
+    if(word.endsWith('le')&&word.length>2&&!'aeiou'.includes(word[word.length-3])) count++;
+    return Math.max(1,Math.min(count, Math.ceil(word.length/3)));
   }
   const totalSyllables=words.reduce((s,w)=>s+countSyllables(w),0);
   const avgSyllablesPerWord=totalSyllables/words.length;
@@ -658,7 +671,10 @@ visited.add(startUrl);
       if(!analysis){
         analysis={title:'',desc:'',h1s:[],missingAlt:0,headingNodes:[],imgData:[],hasSchema:0,hasSemantic:0,hasLists:0,hasTables:0,score:0,aiScore:0,url:pageUrl,keywords:null,readability:null,internalLinks:[]};
       }
-      const pg={...analysis,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random()};
+ const extended = _extendPageAnalysis(analysis, proxyResult&&proxyResult.html?proxyResult.html:'', pageUrl);
+      const fullScores = AuditForge.scores.compute(extended);
+      if (fullScores) extended.score = fullScores.overall;
+      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random()};
       pages.push(pg); done++;
       addRow(pg); updateStats();
     }));
@@ -2004,42 +2020,87 @@ function _extendPageAnalysis(result, html, url) {
     result.contrastIssues = 0; // Cannot compute in browser without rendering
 
     // ── FAQ detection ──
-    let faqCount = 0;
-    // FAQPage schema
+       // FAQ detection — scored independently per signal type, then composed
+    let schemaFaqQuestions = 0;
+    let hasFAQPageSchema = false;
     doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
       try {
         const j = JSON.parse(s.textContent || '');
-        const type = (j['@type'] || (Array.isArray(j['@graph']) ? j['@graph'].find(x => x['@type'] === 'FAQPage')?.['@type'] : ''));
-        if (/FAQPage/i.test(type)) faqCount += 5;
-        if (j.mainEntity && Array.isArray(j.mainEntity)) faqCount += j.mainEntity.length;
+        const checkNode = (node) => {
+          if (!node || typeof node !== 'object') return;
+          if (/FAQPage/i.test(node['@type'])) {
+            hasFAQPageSchema = true;
+            if (Array.isArray(node.mainEntity)) schemaFaqQuestions += node.mainEntity.length;
+          }
+          if (Array.isArray(node['@graph'])) node['@graph'].forEach(checkNode);
+        };
+        checkNode(j);
       } catch(e) {}
     });
-    // Question headings
-    const qHeadings = [...doc.querySelectorAll('h2,h3,h4')].filter(h => /\?$/.test(h.textContent.trim()));
-    faqCount += qHeadings.length;
-    // Question sentences in body text
-    const questionSentences = (bodyText.match(/[A-Z][^.!?]*\?/g) || []).length;
-    faqCount += Math.floor(questionSentences / 2);
-    result.faqCount = Math.min(faqCount, 20);
+    // Question headings (h2/h3/h4 ending in ?)
+    const qHeadings = [...doc.querySelectorAll('h2,h3,h4')].filter(h => /\?[\s]*$/.test(h.textContent.trim()));
+    // Question sentences in paragraphs (not headings — already counted)
+    const paraText = [...doc.querySelectorAll('p')].map(p => p.textContent).join(' ');
+    const questionSentences = (paraText.match(/[A-Z][^.!?]{10,}[?]/g) || []).length;
 
-    // ── Entity detection ──
-    // Consecutive capitalized words (naive NER heuristic)
-    const entityMatches = bodyText.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g) || [];
-    const entitySet = new Set(entityMatches.filter(e => e.length > 4 && e.split(' ').length >= 2));
+    // Compose without double-counting: schema is authoritative, headings and sentences add evidence
+    const faqScore = (hasFAQPageSchema ? 8 : 0)
+      + Math.min(6, schemaFaqQuestions)
+      + Math.min(4, qHeadings.length)
+      + Math.min(2, Math.floor(questionSentences / 3));
+    result.faqCount = Math.min(faqScore, 20);
+    result.hasFAQPageSchema = hasFAQPageSchema;
+    result.schemaFaqQuestions = schemaFaqQuestions;
+    result.qHeadingCount = qHeadings.length;
+
+
+// ── Entity detection ──
+    // Filter common false-positive sentence starters and UI phrases
+    const ENTITY_STOPLIST = new Set([
+      'The Page','This Page','Learn More','Read More','Click Here','Get Started',
+      'Sign Up','Log In','Sign In','Find Out','See More','View All','New Tab',
+      'Skip To','Back To','Go To','More Info','Privacy Policy','Terms Of',
+      'All Rights','Copyright Notice','Cookie Policy','About Us','Contact Us',
+      'Our Team','Our Services','Our Products','This Site','This Website',
+      'The Website','The Company','The Team','The Product','The Service',
+      'Last Updated','Posted On','Written By','Published By','Reviewed By',
+      'Table Of','List Of','Types Of','Examples Of','Benefits Of','How To'
+    ]);
+    const entityMatches = bodyText.match(/\b([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,}){1,4})\b/g) || [];
+    const entitySet = new Set(
+      entityMatches.filter(e => {
+        if (e.length < 5) return false;
+        if (ENTITY_STOPLIST.has(e)) return false;
+        // Must not be at very start of a sentence fragment (heuristic: appears 2+ times or is long enough)
+        const freq = (bodyText.match(new RegExp('\\b' + e.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'g')) || []).length;
+        return freq >= 1 && e.split(' ').length >= 2;
+      })
+    );
     result.entityCount = Math.min(entitySet.size, 30);
     result.topEntities = [...entitySet].slice(0, 10);
 
     // ── Definition detection ──
+      // Require subject to be a specific term (capitalized noun or quoted term), not pronouns
     const defPatterns = [
-      /\b\w[\w\s]{2,30}\s+is\s+(?:a|an|the)\s+/gi,
-      /\bdefined as\b/gi,
-      /\brefers to\b/gi,
-      /\bknown as\b/gi,
-      /\bmeans\b.{5,60}(?:\.|,)/gi
+      // "X is a/an [noun]" — subject must be a capitalized term or quoted phrase, min 3 chars
+      /\b[A-Z][a-zA-Z]{2,30}\s+(?:is|are)\s+(?:a|an|the)\s+[a-z]/g,
+      // "[term]" is defined as / refers to
+      /\b[A-Z][a-zA-Z\s]{2,30}(?:is\s+)?defined\s+as\b/gi,
+      /\b[A-Z][a-zA-Z\s]{2,30}refers\s+to\b/gi,
+      /\b[A-Z][a-zA-Z\s]{2,30}(?:also\s+)?known\s+as\b/gi,
+      // "(term) means ..."
+      /\([^)]{3,40}\)\s+means\b/gi,
+      // "the term X means" patterns
+      /\bthe\s+term\s+["']?[A-Z][^"']{2,30}["']?\s+(?:means|refers|describes)\b/gi
     ];
     let definitionCount = 0;
     defPatterns.forEach(p => {
-      definitionCount += (bodyText.match(p) || []).length;
+      const hits = (bodyText.match(p) || []);
+      // Exclude common false positives
+      const filtered = hits.filter(h =>
+        !/^(This|It|That|There|He|She|They|We|You|I|Here)\s/i.test(h.trim())
+      );
+      definitionCount += filtered.length;
     });
     result.definitionCount = Math.min(definitionCount, 15);
 
