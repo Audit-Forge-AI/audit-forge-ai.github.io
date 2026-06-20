@@ -156,6 +156,49 @@ function resolveStatus(proxyResult, pageUrl){
 }
 
 /* ══════════════════════════════════════
+   SOFT 404 DETECTION
+   ══════════════════════════════════════ */
+const SOFT_404_PATTERNS = [
+  /page\s+not\s+found/i,
+  /\b404\b/,
+  /not\s+found/i,
+  /no\s+results(\s+found)?/i,
+  /content\s+not\s+available/i,
+  /this\s+page\s+doesn['']t\s+exist/i,
+  /this\s+page\s+does\s+not\s+exist/i,
+  /sorry[,\s]+we\s+can['']t\s+find/i,
+  /we\s+couldn['']t\s+find/i,
+  /the\s+page\s+you\s+requested/i,
+  /oops[,!\s]+something\s+went\s+wrong/i,
+  /error\s+404/i,
+  /page\s+has\s+been\s+(removed|deleted|moved)/i
+];
+
+/**
+ * Detect soft-404 pages that return HTTP 200 but display "not found" content.
+ * Checks title, first H1, and the first ~500 chars of body text.
+ * Returns { isSoft404: boolean, matchedPattern: string|null, matchedIn: string|null }
+ */
+function detectSoft404(pg) {
+  if (!pg || pg.status !== 200) return { isSoft404: false, matchedPattern: null, matchedIn: null };
+
+  const candidates = [
+    { zone: 'title', text: pg.title || '' },
+    { zone: 'H1',    text: (pg.h1s && pg.h1s[0]) || '' },
+    { zone: 'body',  text: (pg.bodyText || '').slice(0, 500) }
+  ];
+
+  for (const { zone, text } of candidates) {
+    for (const pattern of SOFT_404_PATTERNS) {
+      if (pattern.test(text)) {
+        return { isSoft404: true, matchedPattern: pattern.toString(), matchedIn: zone };
+      }
+    }
+  }
+  return { isSoft404: false, matchedPattern: null, matchedIn: null };
+}
+
+/* ══════════════════════════════════════
    LINK EXTRACTOR
    ══════════════════════════════════════ */
 function normalizeUrl(url){
@@ -674,7 +717,8 @@ visited.add(startUrl);
  const extended = _extendPageAnalysis(analysis, proxyResult&&proxyResult.html?proxyResult.html:'', pageUrl);
       const fullScores = AuditForge.scores.compute(extended);
       if (fullScores) extended.score = fullScores.overall;
-      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random()};
+const soft404Result = detectSoft404({...extended, status: statusInfo.status});
+      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random(),soft404:soft404Result.isSoft404,soft404Zone:soft404Result.matchedIn};
       pages.push(pg); done++;
       addRow(pg); updateStats();
     }));
@@ -1881,7 +1925,10 @@ function clearPaste(){
 
 function _processPastedHTML(html,url){
   const analysis=analyzePage(html,url);
-  const pg={...analysis,status:200,statusLabel:'200 OK (pasted)',statusCls:'s200',url,id:'paste'+Date.now(),isPasted:true};
+  const extended=_extendPageAnalysis(analysis,html,url);
+  const fullScores=AuditForge.scores.compute(extended);
+  if(fullScores) extended.score=fullScores.overall;
+  const pg={...extended,status:200,statusLabel:'200 OK (pasted)',statusCls:'s200',url,id:'paste'+Date.now(),isPasted:true};
   const existing=pages.findIndex(p=>p.url===url&&p.isPasted);
   if(existing>=0) pages[existing]=pg; else pages.push(pg);
   updateStats();
@@ -2037,43 +2084,68 @@ function _extendPageAnalysis(result, html, url) {
         checkNode(j);
       } catch(e) {}
     });
-    // Question headings (h2/h3/h4 ending in ?)
-    const qHeadings = [...doc.querySelectorAll('h2,h3,h4')].filter(h => /\?[\s]*$/.test(h.textContent.trim()));
-    // Question sentences in paragraphs (not headings — already counted)
+// Question headings (h2/h3/h4 ending in ?)
+    const allQHeadings = [...doc.querySelectorAll('h2,h3,h4')].filter(h => /\?[\s]*$/.test(h.textContent.trim()));
+    // Deduplicate: if FAQPage schema exists, headings likely mirror schema questions.
+    // Only count headings that exceed the schema question count (i.e. additional uncaptured questions).
+    const deduplicatedQHeadings = hasFAQPageSchema
+      ? Math.max(0, allQHeadings.length - schemaFaqQuestions)
+      : allQHeadings.length;
+    // Question sentences in body paragraphs only (exclude heading text already counted above)
     const paraText = [...doc.querySelectorAll('p')].map(p => p.textContent).join(' ');
     const questionSentences = (paraText.match(/[A-Z][^.!?]{10,}[?]/g) || []).length;
 
-    // Compose without double-counting: schema is authoritative, headings and sentences add evidence
+    // Compose without double-counting:
+    // Schema is authoritative. Headings add evidence only for questions not in schema.
+    // Paragraph sentences add marginal evidence only.
     const faqScore = (hasFAQPageSchema ? 8 : 0)
       + Math.min(6, schemaFaqQuestions)
-      + Math.min(4, qHeadings.length)
-      + Math.min(2, Math.floor(questionSentences / 3));
+      + Math.min(3, deduplicatedQHeadings)
+      + Math.min(1, Math.floor(questionSentences / 5));
     result.faqCount = Math.min(faqScore, 20);
-    result.hasFAQPageSchema = hasFAQPageSchema;
+    result.qHeadingCount = allQHeadings.length;
+     result.hasFAQPageSchema = hasFAQPageSchema;
     result.schemaFaqQuestions = schemaFaqQuestions;
     result.qHeadingCount = qHeadings.length;
 
 
 // ── Entity detection ──
     // Filter common false-positive sentence starters and UI phrases
+// Common UI/navigation/CTA phrases and generic sentence starters to exclude from entity detection.
     const ENTITY_STOPLIST = new Set([
       'The Page','This Page','Learn More','Read More','Click Here','Get Started',
-      'Sign Up','Log In','Sign In','Find Out','See More','View All','New Tab',
-      'Skip To','Back To','Go To','More Info','Privacy Policy','Terms Of',
-      'All Rights','Copyright Notice','Cookie Policy','About Us','Contact Us',
-      'Our Team','Our Services','Our Products','This Site','This Website',
-      'The Website','The Company','The Team','The Product','The Service',
-      'Last Updated','Posted On','Written By','Published By','Reviewed By',
-      'Table Of','List Of','Types Of','Examples Of','Benefits Of','How To'
+      'Sign Up','Log In','Sign In','Log Out','Sign Out','Find Out','See More',
+      'View All','New Tab','Skip To','Back To','Go To','More Info',
+      'Privacy Policy','Terms Of','Terms And','All Rights','Copyright Notice',
+      'Cookie Policy','About Us','Contact Us','Our Team','Our Services',
+      'Our Products','This Site','This Website','The Website','The Company',
+      'The Team','The Product','The Service','Last Updated','Posted On',
+      'Written By','Published By','Reviewed By','Table Of','List Of',
+      'Types Of','Examples Of','Benefits Of','How To','What Is','Why Is',
+      'When To','Where To','Who Is','Get In','Find Out','Learn How',
+      'Get Free','Try Free','Start Free','Start Now','Buy Now','Shop Now',
+      'View More','Show More','Load More','Read Full','View Full',
+      'See All','See Details','More Details','Full Article',
+      'Related Posts','Related Articles','You May','You Might',
+      'We Use','We Are','We Have','We Do','We Can','We Will',
+      'It Is','It Was','It Can','It Will','That Is','This Is',
+      'There Are','There Is','These Are','Those Are'
     ]);
-    const entityMatches = bodyText.match(/\b([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,}){1,4})\b/g) || [];
+
+    // Generic sentence-starter patterns to reject regardless of stoplist
+    const ENTITY_REJECT_PATTERN = /^(The|This|These|Those|A|An|It|He|She|They|We|You|I|Our|Your|My|His|Her|Their|Its|There|Here)\s/i;
+
+    const entityMatches = bodyText.match(/\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,4})\b/g) || [];
     const entitySet = new Set(
       entityMatches.filter(e => {
-        if (e.length < 5) return false;
-        if (ENTITY_STOPLIST.has(e)) return false;
-        // Must not be at very start of a sentence fragment (heuristic: appears 2+ times or is long enough)
-        const freq = (bodyText.match(new RegExp('\\b' + e.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'g')) || []).length;
-        return freq >= 1 && e.split(' ').length >= 2;
+        if (e.length < 6) return false;                       // too short to be meaningful
+        if (ENTITY_STOPLIST.has(e)) return false;              // explicit blocklist
+        if (ENTITY_REJECT_PATTERN.test(e)) return false;       // starts with a generic pronoun/article
+        if (e.split(' ').length < 2) return false;             // require at least two words (multi-word entities only)
+        // Require the entity to appear at least twice, or be at least 3 words long (stronger signal)
+        const escaped = e.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const freq = (bodyText.match(new RegExp('\\b' + escaped + '\\b', 'g')) || []).length;
+        return freq >= 2 || e.split(' ').length >= 3;
       })
     );
     result.entityCount = Math.min(entitySet.size, 30);
@@ -3860,8 +3932,25 @@ AuditForge._downloadSitemap = function() {
       extra.push({ sev:'medium', ico:'🔵', title:'Indexability Warning', detail:r.reason, fix:'Verify the canonical URL is intentional. If so, ensure the canonical page is fully optimized.' });
     });
 
-    // Store on pg for display elsewhere
+// Store on pg for display elsewhere
     pg._indexability = indexability;
+
+    // Soft-404 detection
+    if (!pg.soft404 && pg.status === 200) {
+      // Run detection lazily if not already set during crawl (e.g. paste audits)
+      const soft404Result = detectSoft404(pg);
+      pg.soft404 = soft404Result.isSoft404;
+      pg.soft404Zone = soft404Result.matchedIn;
+    }
+    if (pg.soft404) {
+      extra.push({
+        sev: 'high',
+        ico: '🟠',
+        title: 'Soft 404 Detected',
+        detail: `Page returns HTTP 200 but contains "not found" content in ${pg.soft404Zone || 'page content'}. Search engines may index this as a real page, wasting crawl budget and diluting site quality signals.`,
+        fix: 'Return a proper HTTP 404 status code for missing pages, or redirect to a relevant existing page with a 301. Remove soft-404 text and ensure the page has genuine content.'
+      });
+    }
 
     return [...base, ...extra];
   };
