@@ -228,9 +228,12 @@ function extractLinks(html, base){
   doc.querySelectorAll('a[href]').forEach(a=>{
     try{
       const abs=new URL(a.getAttribute('href'),base).href;
+     let _absPath='';
+      try{_absPath=new URL(abs).pathname;}catch(e){}
       if(
         abs.startsWith(origin) &&
-        !/[#?]|mailto:|tel:|\.pdf|\.jpg|\.png|\.svg|\.zip/i.test(abs)
+        !/[#?]|mailto:|tel:/.test(abs) &&
+        !/\.(pdf|jpg|jpeg|png|gif|webp|svg|zip|mp4|mp3|mov|avi|wmv|exe|dmg|pkg|tar|gz|xls|xlsx|doc|docx|ppt|pptx|css|js|ico|woff|woff2|ttf|eot)$/i.test(_absPath)
       ){
         out.add(normalizeUrl(abs));
       }
@@ -279,15 +282,17 @@ function analyzePage(html, url){
 
   const h1s=[...doc.querySelectorAll('h1')].map(h=>h.textContent.trim());
   const imgs=[...doc.querySelectorAll('img')];
-  const imgData=imgs.map(img=>({
+const imgData=imgs.map(img=>({
     src:img.getAttribute('src')||'',
     alt:img.getAttribute('alt'),
+    altMissing:img.getAttribute('alt')===null&&!img.getAttribute('aria-label')&&!img.getAttribute('aria-hidden'),
+    altDecorative:img.getAttribute('alt')==='',
     loading:img.getAttribute('loading'),
     width:img.getAttribute('width'),
     height:img.getAttribute('height'),
     srcset:img.getAttribute('srcset')||''
   }));
-  const missingAlt=imgs.filter(i=>!i.getAttribute('alt')&&!i.getAttribute('aria-label')).length;
+  const missingAlt=imgs.filter(i=>i.getAttribute('alt')===null&&!i.getAttribute('aria-label')&&!i.getAttribute('aria-hidden')).length;
   const headingNodes=[...doc.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h=>({tag:h.tagName.toLowerCase(),text:h.textContent.trim()}));
   const hasSchema=doc.querySelectorAll('script[type="application/ld+json"]').length;
   const hasSemantic=doc.querySelectorAll('article,section,main,nav,aside,header,footer').length;
@@ -448,6 +453,25 @@ function analyzeReadability(text){
     avgParaLength:Math.round(avgParaLength),
     totalWords:words.length, totalSentences:sentences.length
   };
+}
+
+/* ══════════════════════════════════════
+   PAGE TYPE DETECTION
+   ══════════════════════════════════════ */
+function detectPageType(pg){
+  const url=(pg.url||'').toLowerCase();
+  const title=(pg.title||'').toLowerCase();
+  const h1=(pg.h1s&&pg.h1s[0]||'').toLowerCase();
+  const path=url.replace(/https?:\/\/[^/]+/,'');
+  if(path==='/'||path===''||/^\/(index|home)(\.html?)?$/i.test(path)) return 'homepage';
+  if(/\/(contact|reach-us|get-in-touch)/i.test(path)||/contact/i.test(title)) return 'contact';
+  if(/\/(privacy|privacy-policy)/i.test(path)||/privacy policy/i.test(title)) return 'privacy';
+  if(/\/(terms|terms-of|tos|legal)/i.test(path)||/terms of/i.test(title)) return 'terms';
+  if(/\/(blog|news|article|post)\//i.test(path)||/article|blog post/i.test(title)) return 'article';
+  if(/\/(product|shop|store|item)\//i.test(path)||/buy|price|add to cart/i.test(title)) return 'product';
+  if(/\/(category|cat|tag|archive)\//i.test(path)) return 'category';
+  if(/free trial|get started|sign up|landing/i.test(title)||/\/(lp|landing)\//i.test(path)) return 'landing';
+  return 'general';
 }
 
 /* ══════════════════════════════════════
@@ -719,7 +743,7 @@ extractLinks(proxyResult.html, pageUrl).forEach(l=>{
       if (fullScores) extended.score = fullScores.overall;
 const soft404Result = detectSoft404({...extended, status: statusInfo.status});
       const redirectHops = (proxyResult&&proxyResult.redirectHops)||0;
-      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random(),soft404:soft404Result.isSoft404,soft404Zone:soft404Result.matchedIn,depth:pageDepth,redirectHops};
+      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random(),soft404:soft404Result.isSoft404,soft404Zone:soft404Result.matchedIn,depth:pageDepth,redirectHops,pageType:detectPageType({...extended,url:normalizeUrl(pageUrl)})};
       pages.push(pg); done++;
       addRow(pg); updateStats();
     }));
@@ -743,8 +767,16 @@ const soft404Result = detectSoft404({...extended, status: statusInfo.status});
     });
   });
 
-// Canonical chain / loop / broken canonical analysis
-  window._canonicalIssues = {};
+// Per-URL robots compliance
+  if (window._lastRobots && window._lastRobots.found && window._lastRobots.content) {
+    const _parsedRobots = AuditForge.robots.parse(window._lastRobots.content);
+    pages.forEach(pg => {
+      pg.robotsBlocked = !AuditForge.robots.isUrlAllowed(_parsedRobots, pg.url);
+    });
+  }
+
+  // Canonical chain / loop / broken canonical analysis
+   window._canonicalIssues = {};
   const crawledUrlSet = new Set(pages.map(p => p.url));
   pages.forEach(pg => {
     if (!pg.canonical || !pg.url) return;
@@ -1290,7 +1322,7 @@ function loadImages(pg){
     return;
   }
 
-  const noAlt=imgs.filter(i=>i.alt===null||i.alt===undefined).length;
+  const noAlt=imgs.filter(i=>i.altMissing===true).length;
   const noLazy=imgs.filter(i=>!i.loading||i.loading!=='lazy').length;
   const noSize=imgs.filter(i=>!i.width||!i.height).length;
   const clsRisk=imgs.filter(i=>(!i.width||!i.height)&&!i.srcset).length;
@@ -1303,7 +1335,7 @@ function loadImages(pg){
     return`<div class="img-row">
       <div style="font-size:18px;text-align:center">${altOk?'🖼':'🖼'}</div>
       <div class="img-src" title="${img.src}">${(img.src||'(no src)').split('/').pop().slice(0,40)||'(no src)'}</div>
-      <div><span class="img-badge ${altOk?'ok':'bad'}">${altOk?'ALT ✓':'NO ALT'}</span></div>
+      <div><span class="img-badge ${img.altMissing?'bad':img.altDecorative?'warn':'ok'}">${img.altMissing?'NO ALT':img.altDecorative?'DECO':'ALT ✓'}</span></div>
       <div><span class="img-badge ${lazyOk?'ok':'warn'}">${lazyOk?'LAZY':'NO LAZY'}</span></div>
       <div><span class="img-badge ${sizeOk?'ok':'warn'}">${sizeOk?'SIZE ✓':'NO SIZE'}</span></div>
       <div><span class="img-badge ${clsRisk&&!sizeOk?'bad':'ok'}">${(!img.width||!img.height)&&!img.srcset?'CLS ⚠':'CLS OK'}</span></div>
@@ -1977,7 +2009,8 @@ function clearPaste(){
 
 function _processPastedHTML(html,url){
   const analysis=analyzePage(html,url);
-  const extended=_extendPageAnalysis(analysis,html,url);
+const extended=_extendPageAnalysis(analysis,html,url);
+  extended.pageType=detectPageType({...extended,url});
   const fullScores=AuditForge.scores.compute(extended);
   if(fullScores) extended.score=fullScores.overall;
   const pg={...extended,status:200,statusLabel:'200 OK (pasted)',statusCls:'s200',url,id:'paste'+Date.now(),isPasted:true};
@@ -2099,6 +2132,9 @@ function _extendPageAnalysis(result, html, url) {
       }
       return '';
     }
+const viewportEl = doc.querySelector('meta[name="viewport"]');
+    result.hasViewport = !!viewportEl;
+    result.viewportContent = viewportEl ? (viewportEl.getAttribute('content')||'') : '';
     result.ogTitle    = getMeta(['meta[property="og:title"]']);
     result.ogDesc     = getMeta(['meta[property="og:description"]']);
     result.ogImage    = getMeta(['meta[property="og:image"]']);
@@ -2110,11 +2146,27 @@ function _extendPageAnalysis(result, html, url) {
     result.hasSocialTags = !!(result.ogTitle || result.ogDesc || result.twitterCard);
 
     // ── Accessibility signals ──
-    result.hasLangAttr   = !!doc.querySelector('html[lang]');
+result.hasLangAttr   = !!doc.querySelector('html[lang]');
+    const allButtons = [...doc.querySelectorAll('button')];
+    result.unlabelledButtons = allButtons.filter(btn=>{
+      const txt=(btn.textContent||'').trim();
+      return !txt && !btn.getAttribute('aria-label') && !btn.getAttribute('aria-labelledby') && !btn.getAttribute('title');
+    }).length;
+    result.totalButtons = allButtons.length;
     result.hasSkipLink   = !!doc.querySelector('a[href="#main"],a[href="#content"],a[href="#skip"]');
     result.ariaLandmarks = doc.querySelectorAll('[role="main"],[role="navigation"],[role="banner"],[role="contentinfo"]').length;
-    result.labelledInputs = doc.querySelectorAll('input[aria-label],input[id]').length;
-    result.totalInputs   = doc.querySelectorAll('input:not([type="hidden"])').length;
+const _formControls = [...doc.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),select,textarea')];
+    result.totalInputs = _formControls.length;
+    const _labelIds = new Set([...doc.querySelectorAll('label[for]')].map(l=>l.getAttribute('for')));
+    result.unlabelledInputs = _formControls.filter(el=>{
+      if(el.getAttribute('aria-label')) return false;
+      if(el.getAttribute('aria-labelledby')) return false;
+      if(el.getAttribute('title')) return false;
+      if(el.id && _labelIds.has(el.id)) return false;
+      if(el.closest('label')) return false;
+      return true;
+    }).length;
+    result.labelledInputs = result.totalInputs - result.unlabelledInputs;
     result.tabIndex      = doc.querySelectorAll('[tabindex]').length;
     result.contrastIssues = 0; // Cannot compute in browser without rendering
 
@@ -2122,9 +2174,11 @@ function _extendPageAnalysis(result, html, url) {
        // FAQ detection — scored independently per signal type, then composed
     let schemaFaqQuestions = 0;
     let hasFAQPageSchema = false;
-    doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
       try {
-        const j = JSON.parse(s.textContent || '');
+        const raw = s.textContent || '';
+        if (!raw.trim()) return;
+        const j = JSON.parse(raw);
         const checkNode = (node) => {
           if (!node || typeof node !== 'object') return;
           if (/FAQPage/i.test(node['@type'])) {
@@ -2304,8 +2358,29 @@ function _extendPageAnalysis(result, html, url) {
       : authorityLinks.length >= 1 || (result.citationCount >= 4) ? 75
       : 50;
 
-// ── E-E-A-T Signals ──
-    const eeat = {
+// ── Hreflang ──
+    const hreflangTags = [...doc.querySelectorAll('link[rel="alternate"][hreflang]')];
+    const hreflangValues = hreflangTags.map(el=>({lang:el.getAttribute('hreflang')||'',href:el.getAttribute('href')||''}));
+    const validLangRe = /^(x-default|[a-z]{2,3}(-[A-Z]{2}|(-[A-Za-z]{4})?(-[A-Z]{2})?)?)$/;
+    const hreflangIssues = [];
+    let hasSelfHreflang = false;
+    let hasXDefault = false;
+    hreflangValues.forEach(({lang,href})=>{
+      if(lang==='x-default') hasXDefault=true;
+      if(!validLangRe.test(lang)) hreflangIssues.push('Invalid hreflang value: "'+lang+'"');
+      try{ if(new URL(href).href===new URL(url).href) hasSelfHreflang=true; }catch(e){}
+    });
+    result.hreflang = {
+      tags: hreflangValues,
+      count: hreflangValues.length,
+      hasXDefault,
+      hasSelfHreflang,
+      issues: hreflangIssues,
+      present: hreflangValues.length > 0
+    };
+
+    // ── E-E-A-T Signals ──
+      const eeat = {
       hasPersonSchema:   false,
       hasAuthorSchema:   false,
       hasAuthorRel:      false,
@@ -2362,13 +2437,33 @@ function _extendPageAnalysis(result, html, url) {
     result.eeat = eeat;
     result.eeatScore = Math.min(100, eeatScore);
 
+// ── Answer Box / Featured Snippet Detection ──
+    const answerBoxCandidates = [];
+    const questionHeadings = [...doc.querySelectorAll('h2,h3,h4')].filter(h=>/\?[\s]*$/.test(h.textContent.trim()));
+    questionHeadings.forEach(h=>{
+      let next = h.nextElementSibling;
+      while(next && !/^H[1-6]$/.test(next.tagName)){
+        if(next.tagName==='P'){
+          const wc=(next.textContent||'').split(/\s+/).filter(Boolean).length;
+          if(wc>=40 && wc<=70){
+            answerBoxCandidates.push({question:h.textContent.trim().slice(0,100), wordCount:wc});
+            break;
+          }
+        }
+        next=next.nextElementSibling;
+      }
+    });
+    result.answerBoxCandidates = answerBoxCandidates;
+    result.answerBoxReady = answerBoxCandidates.length > 0;
+
     // ── List / Table density ──
-    const totalWords = result.wordCount || 1;    const listItems = doc.querySelectorAll('li').length;
+    const totalWords = result.wordCount || 1;
+     const listItems = doc.querySelectorAll('li').length;
     result.listDensity = Math.min(100, Math.round((listItems / (totalWords / 100)) * 10));
     result.tableDensity = Math.min(100, (result.hasTables || 0) * 25);
 
     // ── AI Signals composite ──
-    result.aiSignals = {
+result.aiSignals = {
       hasFAQ:         result.faqCount > 2,
       hasEntities:    result.entityCount > 3,
       hasDefinitions: result.definitionCount > 1,
@@ -2378,7 +2473,8 @@ function _extendPageAnalysis(result, html, url) {
       hasSchema:      !!(result.hasSchema),
       hasSemantics:   !!(result.hasSemantic),
       hasStructuredLists: !!(result.hasLists),
-      hasTables:      !!(result.hasTables)
+      hasTables:      !!(result.hasTables),
+      hasAnswerBox:   result.answerBoxReady || false
     };
 
     // ── AI Metrics per dimension (0–100) ──
@@ -2424,8 +2520,9 @@ function _extendPageAnalysis(result, html, url) {
     result.canonicalValidation = validateCanonical(result, result.allCanonicals);
 
     // ── Schema type detection ──
-    result.schemaTypes = [];
-    doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+   result.schemaTypes = [];
+    result.schemaErrors = [];
+    doc.querySelectorAll('script[type="application/ld+json"]').forEach((s,idx) => {
       try {
         const j = JSON.parse(s.textContent || '');
         const t = j['@type'];
@@ -2433,7 +2530,9 @@ function _extendPageAnalysis(result, html, url) {
         if (j['@graph']) {
           j['@graph'].forEach(n => { if (n['@type']) result.schemaTypes.push(n['@type']); });
         }
-      } catch(e) {}
+      } catch(e) {
+        result.schemaErrors.push({block: idx+1, message: e.message});
+      }
     });
     result.schemaTypes = [...new Set(result.schemaTypes.flat())];
     result.hasFAQSchema       = result.schemaTypes.includes('FAQPage');
@@ -2567,7 +2666,15 @@ function _ensureExtended(pg) {
         hasSemantics:   !!(pg.hasSemantic)
       };
     }
-if (!pg.eeat) pg.eeat = {hasPersonSchema:false,hasAuthorSchema:false,hasAuthorRel:false,hasDatePublished:false,hasDateModified:false,bylineFound:false,bylineName:'',authorName:''};
+if (!pg.answerBoxCandidates) pg.answerBoxCandidates = [];
+    if (pg.answerBoxReady === undefined) pg.answerBoxReady = false;
+    if (pg.unlabelledInputs === undefined) pg.unlabelledInputs = 0;
+     if (pg.unlabelledButtons === undefined) pg.unlabelledButtons = 0;
+     if (pg.hasViewport === undefined) pg.hasViewport = true;
+if (pg.robotsBlocked === undefined) pg.robotsBlocked = false;
+    if (!pg.schemaErrors) pg.schemaErrors = [];
+     if (!pg.hreflang) pg.hreflang = {tags:[],count:0,hasXDefault:false,hasSelfHreflang:false,issues:[],present:false};
+     if (!pg.eeat) pg.eeat = {hasPersonSchema:false,hasAuthorSchema:false,hasAuthorRel:false,hasDatePublished:false,hasDateModified:false,bylineFound:false,bylineName:'',authorName:''};
     if (pg.eeatScore === undefined) pg.eeatScore = 0;
     if (!pg.hasSocialTags) pg.hasSocialTags = !!(pg.ogTitle || pg.twitterCard);
     if (!pg.ogTitle) pg.ogTitle = '';
@@ -2619,22 +2726,27 @@ AuditForge.scores = {
     else if (wc < 300)   { content -= 15; contentD.push({l:'Thin content (<300 words)',       v:-15}); }
     else if (wc < 600)   { content -= 5;  contentD.push({l:'Moderate content (<600 words)',    v:-5}); }
     if (!pg.headingNodes || pg.headingNodes.length < 2) { content -= 10; contentD.push({l:'Too few headings',  v:-10}); }
-    if (!pg.hasLists)    { content -= 5;  contentD.push({l:'No lists for scannability',       v:-5}); }
+    if (!_skipList && !pg.hasLists) { content -= 5; contentD.push({l:'No lists for scannability', v:-5}); }
     if (pg.readability) {
       if (pg.readability.flesch < 30)       { content -= 12; contentD.push({l:'Very hard to read',  v:-12}); }
       else if (pg.readability.flesch < 50)  { content -= 6;  contentD.push({l:'Difficult readability', v:-6}); }
       if (pg.readability.avgSentenceLength > 35) { content -= 5; contentD.push({l:'Very long sentences', v:-5}); }
     }
-    if (!pg.faqCount || pg.faqCount < 2)    { content -= 8;  contentD.push({l:'No FAQ content detected',  v:-8}); }
-    if (pg.definitionCount < 1)             { content -= 5;  contentD.push({l:'No definitions found',      v:-5}); }
+const _pt = pg.pageType || detectPageType(pg);
+    const _skipFAQ = ['contact','privacy','terms','homepage','category'].includes(_pt);
+    const _skipDef = ['contact','privacy','terms'].includes(_pt);
+    const _skipList = ['contact','privacy','terms'].includes(_pt);
+    if (!_skipFAQ && (!pg.faqCount || pg.faqCount < 2)) { content -= 8; contentD.push({l:'No FAQ content detected', v:-8}); }
+    if (!_skipDef && pg.definitionCount < 1)             { content -= 5; contentD.push({l:'No definitions found',    v:-5}); }
     deductions.content = contentD;
     const contentQuality = Math.max(0, Math.min(100, content));
 
     // ── Accessibility ──
     let a11y = 100;
     const a11yD = [];
-    if (pg.missingAlt > 0)    { const p = Math.min(20, pg.missingAlt*3); a11y -= p; a11yD.push({l:pg.missingAlt+' image(s) missing alt', v:-p}); }
-    if (!pg.hasLangAttr)      { a11y -= 8;  a11yD.push({l:'No lang attribute on <html>',   v:-8}); }
+const _trueMissing = (pg.imgData||[]).filter(i=>i.altMissing===true).length;
+    if (_trueMissing > 0) { const p = Math.min(20, _trueMissing*3); a11y -= p; a11yD.push({l:_trueMissing+' image(s) missing alt (decorative excluded)', v:-p}); }
+     if (!pg.hasLangAttr)      { a11y -= 8;  a11yD.push({l:'No lang attribute on <html>',   v:-8}); }
     if (!pg.hasSemantic)      { a11y -= 10; a11yD.push({l:'No semantic HTML landmarks',     v:-10}); }
     if (pg.ariaLandmarks < 2) { a11y -= 5;  a11yD.push({l:'Insufficient ARIA landmarks',   v:-5}); }
     // Heading hierarchy violations
@@ -2937,6 +3049,21 @@ AuditForge.scores = {
    replace fetchRobotsTxt()
    ══════════════════════════════════════ */
 AuditForge.robots = {
+
+  isUrlAllowed(parsedRobots, url) {
+    if (!parsedRobots || !parsedRobots.agents) return true;
+    let path = '';
+    try { path = new URL(url).pathname; } catch(e) { return true; }
+    const rules = parsedRobots.agents['*'] || {disallow:[], allow:[]};
+    // Check allow rules first (more specific wins)
+    for (const a of (rules.allow||[])) {
+      if (a && path.startsWith(a)) return true;
+    }
+    for (const d of (rules.disallow||[])) {
+      if (d && path.startsWith(d)) return false;
+    }
+    return true;
+  },
 
   parse(content) {
     if (!content) return { agents: {}, sitemaps: [], errors: [] };
@@ -4069,7 +4196,48 @@ AuditForge._downloadSitemap = function() {
     if ((pg.redirectHops || 0) >= 2) {      extra.push({sev:'high',ico:'🟠',title:'Redirect Chain Detected',detail:`${pg.redirectHops} redirect hop(s) detected before reaching this URL. Chains dilute PageRank and slow page load.`,fix:'Update all internal links and sitemap entries to point directly to the final destination URL. Collapse the redirect chain to a single 301.'});
     }
 
-// E-E-A-T
+// Unlabelled form controls
+    if ((||0) > 0) {
+      extra.push({sev:'high',ico:'🟠',title:`${} Unlabelled Form Control(s)`,detail:`${} input(s)/select(s)/textarea(s) lack an associated label, aria-label, aria-labelledby, or title (WCAG 1.3.1, 4.1.2).`,fix:'Associate every form control with a <label for="id">, or add aria-label directly to the element.'});
+    }
+
+    // Unlabelled buttons
+    if ((pg.unlabelledButtons||0) > 0) {
+      extra.push({sev:'high',ico:'🟠',title:`${pg.unlabelledButtons} Unlabelled Button(s)`,detail:`${pg.unlabelledButtons} button(s) have no text, aria-label, aria-labelledby, or title. Screen readers cannot identify their purpose (WCAG 4.1.2).`,fix:'Add descriptive aria-label attributes to icon-only buttons, e.g. <button aria-label="Close menu">.'});
+    }
+
+    // Viewport
+    if (pg.hasViewport === false) {
+       extra.push({sev:'medium',ico:'🔵',title:'Missing Viewport Meta Tag',detail:'No <meta name="viewport"> found. Mobile browsers will render at desktop width, causing poor mobile UX and hurting mobile SEO.',fix:'Add <meta name="viewport" content="width=device-width, initial-scale=1"> inside <head>.'});
+    }
+
+// Robots per-URL compliance
+    if (pg.robotsBlocked) {
+      extra.push({sev:'high',ico:'🟠',title:'Page Blocked by robots.txt',detail:`The URL "${pg.url.replace(/https?:\/\/[^/]+/,'')}" matches a Disallow rule in robots.txt. Search engines will not crawl or index this page.`,fix:'If this page should be indexed, remove or adjust the Disallow rule in robots.txt. If intentional, verify the page is not also in your sitemap.'});
+    }
+
+    // Schema syntax errors
+    (pg.schemaErrors||[]).forEach(err=>{
+      extra.push({sev:'high',ico:'🟠',title:`Schema Syntax Error (Block ${err.block})`,detail:`JSON-LD block ${err.block} contains invalid JSON: ${err.message}. This schema block is completely ignored by Google.`,fix:'Validate your JSON-LD at https://validator.schema.org. Common causes: trailing commas, unescaped quotes, missing closing braces.'});
+    });
+
+    // Hreflang
+    const hrefl = pg.hreflang;
+    if (hrefl && hrefl.present) {
+      if (!hrefl.hasSelfHreflang) extra.push({sev:'high',ico:'🟠',title:'Missing Self-Referencing Hreflang',detail:'Hreflang tags found but no tag points back to this page\'s own URL. Google requires a self-reference in every hreflang set.',fix:'Add <link rel="alternate" hreflang="[lang]" href="[this-page-url]"> to the hreflang set.'});
+      if (!hrefl.hasXDefault)    extra.push({sev:'medium',ico:'🔵',title:'Missing x-default Hreflang',detail:'No hreflang x-default tag found. x-default signals the fallback page for unmatched languages.',fix:'Add <link rel="alternate" hreflang="x-default" href="[fallback-url]">.'});
+      hrefl.issues.forEach(issue=>extra.push({sev:'high',ico:'🟠',title:'Invalid Hreflang Value',detail:issue,fix:'Use valid BCP-47 language codes (e.g. en, en-US, fr, zh-Hant). See https://developers.google.com/search/docs/specialty/international/localization'}));
+    }
+
+// Answer box
+    if ((pg.answerBoxCandidates||[]).length > 0) {
+      // positive signal — no issue, but surface as opportunity
+      extra.push({sev:'low',ico:'⚪',title:`${pg.answerBoxCandidates.length} Answer Box Candidate(s) Detected`,detail:`${pg.answerBoxCandidates.length} question heading(s) followed by a 40–70 word answer paragraph found. These are strong Featured Snippet and AI Overview candidates.`,fix:'Ensure each question heading uses exact phrasing users search for. Keep answer paragraphs concise (40–70 words). Add FAQPage schema to reinforce.'});
+    } else if (pg.status===200 && (pg.wordCount||0)>300) {
+      extra.push({sev:'low',ico:'⚪',title:'No Answer Box Candidates',detail:'No question headings followed by 40–70 word answer paragraphs detected. This content is unlikely to trigger Featured Snippets or AI Overviews.',fix:'Structure content as: Question Heading (H2/H3 ending in ?) followed by a direct 40–70 word answer paragraph before elaborating further.'});
+    }
+
+    // E-E-A-T
     const eeatScore = pg.eeatScore !== undefined ? pg.eeatScore : 0;
     if (eeatScore < 40 && pg.status === 200 && (pg.wordCount || 0) > 200) {
       const missing = [];
