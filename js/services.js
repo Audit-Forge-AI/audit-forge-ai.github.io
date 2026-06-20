@@ -205,7 +205,11 @@ function parseHTML(html){
              ||html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i);
     if(dm) desc=dm[1].trim();
   }
-  let canonical=doc.querySelector('link[rel="canonical"]')?.getAttribute('href')?.trim()||'';
+ // Collect ALL canonical tags (to detect multiples)
+  const allCanonicals = [...doc.querySelectorAll('link[rel="canonical"]')]
+    .map(el => el.getAttribute('href')?.trim() || '')
+    .filter(Boolean);
+  let canonical = allCanonicals[0] || '';
   if(!canonical){
     const cm=html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']*)["']/i);
     if(cm) canonical=cm[1].trim();
@@ -405,6 +409,149 @@ function setStepState(stepId, state){
   el.className='prog-step'+(state==='done'?' done':state==='active'?' active':'');
 }
 
+// REPLACE
+/* ══════════════════════════════════════
+   CANONICAL VALIDATION AUDIT
+   ══════════════════════════════════════ */
+function validateCanonical(pg, allCanonicals) {
+  const findings = [];
+  const canonicals = allCanonicals || (pg.canonical ? [pg.canonical] : []);
+
+  if (canonicals.length === 0) {
+    findings.push({
+      severity: 'medium', verdict: 'MISSING',
+      title: 'Missing Canonical Tag',
+      detail: 'No <link rel="canonical"> found on this page.',
+      fix: 'Add <link rel="canonical" href="' + (pg.url || 'https://yoursite.com/page') + '"> to the <head>.'
+    });
+    return { valid: false, findings };
+  }
+
+  if (canonicals.length > 1) {
+    findings.push({
+      severity: 'critical', verdict: 'MULTIPLE',
+      title: 'Multiple Canonical Tags Detected',
+      detail: `Found ${canonicals.length} canonical tags: ${canonicals.join(', ')}`,
+      fix: 'Remove all but one canonical tag. Multiple canonicals are ignored by Google and treated as an error.'
+    });
+  }
+
+  const canon = canonicals[0];
+
+  // Validate URL format
+  let canonUrl;
+  try {
+    canonUrl = new URL(canon);
+  } catch(e) {
+    findings.push({
+      severity: 'critical', verdict: 'INVALID',
+      title: 'Invalid Canonical URL',
+      detail: `Canonical href "${canon}" is not a valid absolute URL.`,
+      fix: 'Use a fully-qualified absolute URL: https://yourdomain.com/page/'
+    });
+    return { valid: false, findings };
+  }
+
+  if (pg.url) {
+    let pageUrl;
+    try { pageUrl = new URL(pg.url); } catch(e) { pageUrl = null; }
+
+    if (pageUrl) {
+      // Cross-domain canonical
+      if (canonUrl.origin !== pageUrl.origin) {
+        findings.push({
+          severity: 'critical', verdict: 'CROSS_DOMAIN',
+          title: 'Cross-Domain Canonical',
+          detail: `Canonical points to a different domain: ${canonUrl.origin} (page is on ${pageUrl.origin})`,
+          fix: 'Only use cross-domain canonicals if you intentionally want to consolidate authority to another site. Verify this is correct.'
+        });
+      } else {
+        // Same domain — check if self-referencing
+        const normCanon = canon.replace(/\/$/, '').toLowerCase().replace(/^https?:/, '');
+        const normPage  = pg.url.replace(/\/$/, '').toLowerCase().replace(/^https?:/, '');
+        if (normCanon === normPage || normCanon === normPage.replace(/^\/\/[^/]+/, '')) {
+          findings.push({
+            severity: 'info', verdict: 'SELF',
+            title: 'Self-Referencing Canonical',
+            detail: 'Canonical correctly points to this page\'s own URL.',
+            fix: null
+          });
+        } else {
+          findings.push({
+            severity: 'medium', verdict: 'MISMATCH',
+            title: 'Canonical Mismatch',
+            detail: `Canonical points to a different URL on the same domain: ${canon}`,
+            fix: 'Verify this is intentional. If this page is the preferred version, update canonical to match this URL.'
+          });
+        }
+      }
+    }
+  }
+
+  const hasCritical = findings.some(f => f.severity === 'critical');
+  return { valid: !hasCritical && findings.every(f => f.verdict === 'SELF'), findings, canonical: canon };
+}
+
+/* ══════════════════════════════════════
+   INDEXABILITY AUDIT
+   ══════════════════════════════════════ */
+
+function analyzeIndexability(pg) {
+  const reasons = [];
+  let indexable = true;
+
+  // 1. HTTP status
+  if (pg.status === 404) {
+    indexable = false;
+    reasons.push({ verdict: 'NO', reason: '404 Not Found — page does not exist' });
+  } else if (pg.status >= 400 || pg.status === 0) {
+    indexable = false;
+    reasons.push({ verdict: 'NO', reason: `HTTP ${pg.status || 'error'} — page unreachable` });
+  }
+
+  // 2. meta robots noindex
+  if (pg.robots && /noindex/i.test(pg.robots)) {
+    indexable = false;
+    reasons.push({ verdict: 'NO', reason: `meta robots contains "noindex" (value: "${pg.robots}")` });
+  }
+
+  // 3. robots.txt blocks
+  const robotsData = window._lastRobots || {};
+  if (robotsData.found && robotsData.disallowAll) {
+    indexable = false;
+    reasons.push({ verdict: 'NO', reason: 'blocked by robots.txt — Disallow: / prevents crawling' });
+  }
+
+  // 4. Canonical points elsewhere
+  if (pg.canonical && pg.url) {
+    const normCanon = pg.canonical.replace(/\/$/, '').toLowerCase();
+    const normUrl   = pg.url.replace(/\/$/, '').toLowerCase();
+    if (normCanon && normCanon !== normUrl) {
+      try {
+        const canonOrigin = new URL(pg.canonical).origin;
+        const pageOrigin  = new URL(pg.url).origin;
+        if (canonOrigin !== pageOrigin) {
+          indexable = false;
+          reasons.push({ verdict: 'NO', reason: `canonical points to a different domain: ${pg.canonical}` });
+        } else {
+          // Same domain but different URL — page may be de-prioritised
+          reasons.push({ verdict: 'WARN', reason: `canonical points to a different URL on same domain: ${pg.canonical}` });
+        }
+      } catch(e) {}
+    }
+  }
+
+  // 5. No issues found
+  if (reasons.length === 0) {
+    reasons.push({ verdict: 'YES', reason: 'page is accessible and indexable — no blocking signals detected' });
+  }
+
+  const finalVerdict = reasons.find(r => r.verdict === 'NO') ? 'NO'
+    : reasons.find(r => r.verdict === 'WARN') ? 'WARN' : 'YES';
+
+  return { indexable: finalVerdict === 'YES', verdict: finalVerdict, reasons };
+}
+
 /* ══════════════════════════════════════
    ROBOTS.TXT FETCH
    ══════════════════════════════════════ */
@@ -516,7 +663,24 @@ visited.add(startUrl);
       addRow(pg); updateStats();
     }));
   }
+// REPLACE
   setStepState('crawl','done');
+
+  // Build incoming link map for orphan detection
+  window._incomingLinks = {};
+  pages.forEach(pg => {
+    if (!window._incomingLinks[pg.url]) window._incomingLinks[pg.url] = [];
+  });
+  pages.forEach(pg => {
+    (pg.internalLinks || []).filter(l => l.isInternal).forEach(link => {
+      const norm = normalizeUrl(link.href);
+      if (window._incomingLinks[norm] !== undefined) {
+        if (!window._incomingLinks[norm].includes(pg.url)) {
+          window._incomingLinks[norm].push(pg.url);
+        }
+      }
+    });
+  });
 
   setProgress('Audit complete — '+pages.length+' pages analyzed',100);
   if(btn){btn.disabled=false;btn.classList.remove('loading');}
@@ -600,8 +764,80 @@ function updateStats(){
   const avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
   setText('stTotal',t); setText('st404',e404); setText('stAlt',alt);
   setText('stDup',dup); setText('stNoH1',noh1); setText('stAvg',avg!==null?avg:'—');
+
+  // Store duplicate maps for issue reporting
+  window._dupTitleMap = {};
+  window._dupH1Map = {};
+  pages.forEach(pg => {
+    if (pg.title) {
+      if (!window._dupTitleMap[pg.title]) window._dupTitleMap[pg.title] = [];
+      window._dupTitleMap[pg.title].push(pg.url);
+    }
+    (pg.h1s || []).forEach(h1 => {
+      const key = h1.trim();
+      if (key) {
+        if (!window._dupH1Map[key]) window._dupH1Map[key] = [];
+        window._dupH1Map[key].push(pg.url);
+      }
+    });
+  });
 }
 
+function getOrphanPageIssues() {
+  const issues = [];
+  const incomingMap = window._incomingLinks || {};
+  const rootUrls = new Set();
+  // Attempt to identify the homepage(s)
+  pages.forEach(pg => {
+    try {
+      const u = new URL(pg.url);
+      if (u.pathname === '/' || u.pathname === '') rootUrls.add(pg.url);
+    } catch(e) {}
+  });
+
+  pages.forEach(pg => {
+    if (rootUrls.has(pg.url)) return; // never flag homepage
+    if (pg.status !== 200) return;    // only flag live pages
+    const incoming = incomingMap[pg.url] || [];
+    if (incoming.length === 0) {
+      const path = pg.url.replace(/https?:\/\/[^/]+/, '') || '/';
+      issues.push({
+        sev: 'medium', ico: '🔵',
+        title: `Potential Orphan Page: ${path}`,
+        detail: `Incoming Links: 0 — this page was discovered but has no internal links pointing to it.`,
+        fix: 'Add at least one internal link from a relevant page to improve crawlability and PageRank distribution.'
+      });
+    }
+  });
+  return issues;
+}
+
+function getDuplicateTitleIssues() {
+   const issues = [];
+  const dupMap = window._dupTitleMap || {};
+  Object.entries(dupMap).forEach(([title, urls]) => {
+    if (urls.length > 1) {
+      issues.push({
+        sev: 'high', ico: '🟠',
+        title: `Duplicate Title: "${title.slice(0, 60)}${title.length > 60 ? '…' : ''}"`,
+        detail: `Used on ${urls.length} pages: ${urls.map(u => u.replace(/https?:\/\/[^/]+/, '') || '/').slice(0, 5).join(', ')}${urls.length > 5 ? '…' : ''}`,
+        fix: 'Each page must have a unique title tag that accurately describes its specific content.'
+      });
+    }
+  });
+  const dupH1Map = window._dupH1Map || {};
+  Object.entries(dupH1Map).forEach(([h1, urls]) => {
+    if (urls.length > 1) {
+      issues.push({
+        sev: 'medium', ico: '🔵',
+        title: `Duplicate H1: "${h1.slice(0, 60)}${h1.length > 60 ? '…' : ''}"`,
+        detail: `Same H1 used on ${urls.length} pages: ${urls.map(u => u.replace(/https?:\/\/[^/]+/, '') || '/').slice(0, 5).join(', ')}`,
+        fix: 'Each page should have a unique H1 that reflects its specific topic and target keyword.'
+      });
+    }
+  });
+  return issues;
+}
 /* ══════════════════════════════════════
    INSPECTOR
    ══════════════════════════════════════ */
@@ -1824,14 +2060,64 @@ function _extendPageAnalysis(result, html, url) {
     const convMatches = bodyText.match(convPatterns) || [];
     result.conversationIntentCount = Math.min(convMatches.length, 40);
 
-    // ── Citation detection ──
+// ── Citation detection (comprehensive) ──
     const blockquotes = doc.querySelectorAll('blockquote').length;
     const cites = doc.querySelectorAll('cite').length;
-    const refLinks = [...doc.querySelectorAll('a')].filter(a =>
-      /source|reference|cite|study|research|according/i.test(a.textContent) ||
+    const blockquotesWithCite = doc.querySelectorAll('blockquote[cite]').length;
+
+    // External authority domain links
+    const AUTHORITY_DOMAINS = [
+      '.gov', '.edu', 'wikipedia.org', 'developers.google.com',
+      'schema.org', 'w3.org', 'github.com', 'developer.mozilla.org',
+      'pubmed.ncbi.nlm.nih.gov', 'ncbi.nlm.nih.gov', 'nature.com',
+      'sciencedirect.com', 'jstor.org', 'arxiv.org'
+    ];
+    const externalLinks = [...doc.querySelectorAll('a[href]')].filter(a => {
+      try {
+        const href = new URL(a.getAttribute('href'), url).href;
+        return href.startsWith('http') && !href.startsWith(new URL(url).origin);
+      } catch(e) { return false; }
+    });
+    const authorityLinks = externalLinks.filter(a => {
+      try {
+        const href = a.getAttribute('href') || '';
+        return AUTHORITY_DOMAINS.some(d => href.includes(d));
+      } catch(e) { return false; }
+    });
+    const generalExternalLinks = externalLinks.length;
+
+    // Citation phrases in body text
+    const CITATION_PHRASES = [
+      /according to\b/gi, /research by\b/gi, /study (?:from|by|published)/gi,
+      /source:/gi, /references:/gi, /citation:/gi, /reported by\b/gi,
+      /as cited in\b/gi, /per \b[A-Z]/g, /\[\d+\]/g, /et al\./gi,
+      /published in\b/gi, /data from\b/gi, /findings (?:show|suggest|indicate)/gi
+    ];
+    let citationPhraseCount = 0;
+    CITATION_PHRASES.forEach(p => {
+      citationPhraseCount += (bodyText.match(p) || []).length;
+    });
+
+    // Anchor text citation signals
+    const citationAnchorLinks = [...doc.querySelectorAll('a')].filter(a =>
+      /source|reference|cite|study|research|according|view study|full report|original/i.test(a.textContent) ||
       /\[\d+\]/.test(a.textContent)
     ).length;
-    result.citationCount = Math.min(blockquotes + cites + refLinks, 15);
+
+    const rawCitationScore = blockquotes + cites + blockquotesWithCite +
+      (authorityLinks.length * 3) + Math.min(5, Math.floor(generalExternalLinks / 2)) +
+      Math.min(5, citationPhraseCount) + Math.min(3, citationAnchorLinks);
+
+    result.citationCount = Math.min(rawCitationScore, 20);
+    result.authorityLinkCount = authorityLinks.length;
+    result.externalLinkCount = generalExternalLinks;
+    result.citationPhraseCount = citationPhraseCount;
+
+    // Citation score 0/50/75/100
+    result.citationScore = result.citationCount === 0 ? 0
+      : authorityLinks.length >= 3 || (result.citationCount >= 8) ? 100
+      : authorityLinks.length >= 1 || (result.citationCount >= 4) ? 75
+      : 50;
 
     // ── List / Table density ──
     const totalWords = result.wordCount || 1;
@@ -1860,7 +2146,7 @@ function _extendPageAnalysis(result, html, url) {
       definitions:    Math.min(100, result.definitionCount * 10),
       chunks:         Math.min(100, result.knowledgeChunkCount * 7),
       conversational: Math.min(100, Math.round((result.conversationIntentCount / 40) * 100)),
-      citations:      Math.min(100, result.citationCount * 10),
+      citations:      result.citationScore !== undefined ? result.citationScore : Math.min(100, result.citationCount * 10),
       schema:         result.hasSchema ? 90 : 5,
       semantics:      Math.min(100, (result.hasSemantic || 0) * 20)
     };
@@ -1890,6 +2176,10 @@ function _extendPageAnalysis(result, html, url) {
       commercial:    Math.min(100, Math.round((commercial    / intentTotal) * 100)),
       transactional: Math.min(100, Math.round((transactional / intentTotal) * 100))
     };
+
+    // ── Canonical validation ──
+    result.allCanonicals = allCanonicals || [];
+    result.canonicalValidation = validateCanonical(result, result.allCanonicals);
 
     // ── Schema type detection ──
     result.schemaTypes = [];
@@ -1978,9 +2268,15 @@ function _ensureExtended(pg) {
       const convPat = /\b(how|why|what|when|where|who|can|should)\b/gi;
       pg.conversationIntentCount = Math.min((bodyText.match(convPat) || []).length, 30);
     }
-    if (pg.citationCount === undefined) {
+     if (pg.citationCount === undefined) {
       pg.citationCount = 0;
     }
+    if (pg.citationScore === undefined) {
+      pg.citationScore = 0;
+    }
+    if (pg.authorityLinkCount === undefined) pg.authorityLinkCount = 0;
+    if (pg.externalLinkCount === undefined) pg.externalLinkCount = 0;
+    if (pg.citationPhraseCount === undefined) pg.citationPhraseCount = 0;
     if (!pg.aiMetrics) {
       pg.aiMetrics = {
         faq:            Math.min(100, pg.faqCount * 15),
@@ -1988,8 +2284,7 @@ function _ensureExtended(pg) {
         definitions:    Math.min(100, pg.definitionCount * 10),
         chunks:         Math.min(100, pg.knowledgeChunkCount * 7),
         conversational: Math.min(100, Math.round((pg.conversationIntentCount / 30) * 100)),
-        citations:      Math.min(100, pg.citationCount * 10),
-        schema:         pg.hasSchema ? 90 : 5,
+        citations:      pg.citationScore !== undefined ? pg.citationScore : Math.min(100, pg.citationCount * 10),        schema:         pg.hasSchema ? 90 : 5,
         semantics:      Math.min(100, (pg.hasSemantic || 0) * 20)
       };
     }
@@ -2303,6 +2598,84 @@ AuditForge.scores = {
       ${intentHtml}
       ${entityHtml}
     `;
+
+ // ── AI Citation Readiness Analysis ──
+    const _ensureExt = pg; // already extended above
+    const positiveSignals = [];
+    const negativeSignals = [];
+
+    if (signals.hasFAQ)            positiveSignals.push('✓ FAQ/Q&A content detected — AI systems extract question-answer pairs');
+    if (signals.hasDefinitions)    positiveSignals.push('✓ Definition patterns detected — LLMs prefer content with clear "X is a..." structures');
+    if (signals.hasSchema)         positiveSignals.push('✓ Structured data (JSON-LD) present — helps AI parse entity relationships');
+    if (pg.hasFAQSchema)           positiveSignals.push('✓ FAQPage schema detected — enables direct FAQ extraction');
+    if (pg.hasOrgSchema)           positiveSignals.push('✓ Organization schema found — entity recognized by AI knowledge graphs');
+    if (pg.hasArticleSchema)       positiveSignals.push('✓ Article schema detected — content classified as authoritative article');
+    if (signals.hasEntities)       positiveSignals.push(`✓ Named entities detected (${pg.entityCount}) — improves entity recognition`);
+    if (signals.hasChunks)         positiveSignals.push('✓ Answer-ready paragraphs found — suitable for AI extraction');
+    if (signals.hasSemantics)      positiveSignals.push('✓ Semantic HTML landmarks present — structural clarity for AI parsers');
+    if (signals.hasCitations)      positiveSignals.push('✓ External citations/references detected — signals source credibility');
+    if ((pg.wordCount || 0) >= 500) positiveSignals.push('✓ Sufficient content depth — longer content is cited more by AI systems');
+
+    if (!signals.hasFAQ)           negativeSignals.push('✗ No FAQ content — add question-and-answer sections');
+    if (!signals.hasDefinitions)   negativeSignals.push('✗ No definition patterns — AI rarely extracts pages without clear definitions');
+    if (!signals.hasSchema)        negativeSignals.push('✗ No structured data — pages without schema are harder for AI to interpret');
+    if (!signals.hasCitations)     negativeSignals.push('✗ No external references — pages without sources score lower on credibility');
+    if (pg.entityCount < 3)        negativeSignals.push('✗ Weak entity signals — add specific named entities (people, orgs, places)');
+    if (!signals.hasChunks)        negativeSignals.push('✗ No answer-ready blocks — restructure content into short Q&A paragraphs');
+    if ((pg.wordCount || 0) < 200) negativeSignals.push('✗ Content too thin — AI systems rarely cite pages with under 200 words');
+    if (!signals.hasSemantics)     negativeSignals.push('✗ No semantic HTML — use <article>, <section>, <main> for structural clarity');
+
+    // Readiness score: 0–100 based on weighted actual signals
+    let readinessScore = 0;
+    if (signals.hasFAQ)          readinessScore += 20;
+    if (signals.hasDefinitions)  readinessScore += 15;
+    if (signals.hasSchema)       readinessScore += 15;
+    if (pg.hasFAQSchema)         readinessScore += 10;
+    if (signals.hasEntities)     readinessScore += 10;
+    if (signals.hasChunks)       readinessScore += 10;
+    if (signals.hasCitations)    readinessScore += 10;
+    if (signals.hasSemantics)    readinessScore += 5;
+    if ((pg.wordCount || 0) >= 500) readinessScore += 5;
+    readinessScore = Math.min(100, readinessScore);
+
+    const readinessColor = readinessScore >= 70 ? 'var(--green)' : readinessScore >= 40 ? 'var(--amber)' : 'var(--red)';
+
+    // Citations detail
+    const citDetail = pg.citationScore !== undefined
+      ? `Citation Score: ${pg.citationScore}/100 (${pg.authorityLinkCount || 0} authority links, ${pg.externalLinkCount || 0} external links, ${pg.citationPhraseCount || 0} citation phrases)`
+      : 'No citation data available — run a full page audit.';
+
+    const citReadinessHtml = `
+      <div style="margin-top:18px;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px">
+        <div class="sec-title" style="margin-bottom:10px">AI Citation Readiness</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+          <div style="font-size:40px;font-weight:800;font-family:var(--mono);color:${readinessColor}">${readinessScore}</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">
+              ${readinessScore >= 70 ? 'High Citation Readiness' : readinessScore >= 40 ? 'Moderate Citation Readiness' : 'Low Citation Readiness'}
+            </div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">${citDetail}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Why AI May Cite This Page</div>
+            ${positiveSignals.length
+              ? positiveSignals.map(s => `<div style="font-family:var(--mono);font-size:11px;color:var(--green);padding:3px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('')
+              : '<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">No positive signals detected.</div>'
+            }
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Why AI May Not Cite This Page</div>
+            ${negativeSignals.length
+              ? negativeSignals.map(s => `<div style="font-family:var(--mono);font-size:11px;color:var(--red);padding:3px 0;border-bottom:1px solid var(--border)">${s}</div>`).join('')
+              : '<div style="font-family:var(--mono);font-size:11px;color:var(--green)">No blocking signals found — strong citation candidate.</div>'
+            }
+          </div>
+        </div>
+      </div>`;
+
+    wrap.insertAdjacentHTML('beforeend', citReadinessHtml);
 
     // Animate bars
     setTimeout(() => {
@@ -3309,10 +3682,47 @@ AuditForge._downloadSitemap = function() {
 
     // Accessibility
     if (!pg.hasLangAttr) extra.push({ sev:'medium', ico:'🔵', title:'Missing lang Attribute', detail:'The <html> element has no lang attribute.', fix:'Add lang="en" to your <html> tag.' });
-
+     
     // AI
     if (!pg.faqCount || pg.faqCount < 2) extra.push({ sev:'medium', ico:'🔵', title:'No FAQ Content Detected', detail:'Pages with FAQ sections rank better and are cited more by AI systems.', fix:'Add a Frequently Asked Questions section with at least 5 Q&A pairs.' });
     if (pg.definitionCount < 1) extra.push({ sev:'low', ico:'⚪', title:'No Definition Patterns', detail:'AI systems extract definitions. Pages with clear definitions are cited more often.', fix:'Add "X is a..." or "X refers to..." patterns for key terms.' });
+
+ // Duplicate title/H1 across pages
+    getDuplicateTitleIssues().forEach(i => extra.push(i));
+
+    // Orphan pages (cross-page signal)
+    getOrphanPageIssues().forEach(i => extra.push(i));
+
+    // Canonical validation
+    if (!pg.canonicalValidation && pg.canonical !== undefined) {
+      pg.canonicalValidation = validateCanonical(pg, pg.allCanonicals || (pg.canonical ? [pg.canonical] : []));
+    }
+    if (pg.canonicalValidation) {
+      pg.canonicalValidation.findings.forEach(f => {
+        if (f.severity === 'info') return; // self-referencing is fine
+        extra.push({
+          sev: f.severity === 'critical' ? 'critical' : f.severity === 'medium' ? 'medium' : 'low',
+          ico: f.severity === 'critical' ? '🔴' : '🔵',
+          title: f.title, detail: f.detail,
+          fix: f.fix || 'Review canonical configuration.'
+        });
+      });
+    }
+
+    // Indexability
+    const indexability = analyzeIndexability(pg);
+
+    if (!indexability.indexable) {
+      indexability.reasons.filter(r => r.verdict === 'NO').forEach(r => {
+        extra.push({ sev:'critical', ico:'🔴', title:'Page Not Indexable', detail:r.reason, fix:'Resolve this issue to allow search engines to index this page.' });
+      });
+    }
+    indexability.reasons.filter(r => r.verdict === 'WARN').forEach(r => {
+      extra.push({ sev:'medium', ico:'🔵', title:'Indexability Warning', detail:r.reason, fix:'Verify the canonical URL is intentional. If so, ensure the canonical page is fully optimized.' });
+    });
+
+    // Store on pg for display elsewhere
+    pg._indexability = indexability;
 
     return [...base, ...extra];
   };
@@ -3443,6 +3853,42 @@ function renderScoreBreakdown(pg) {
     _orig(pg);
     const md = $('metaDesc'); if (md) md.value = pg.desc || '';
     syncSerp();
+
+    // Indexability badge in meta pane
+    const extraEl = $('ddMeta');
+    if (extraEl && pg) {
+      const idx = analyzeIndexability(pg);
+      const idxColor = idx.verdict === 'YES' ? 'var(--green)' : idx.verdict === 'WARN' ? 'var(--amber)' : 'var(--red)';
+      const idxIco   = idx.verdict === 'YES' ? '✓' : idx.verdict === 'WARN' ? '⚠' : '✗';
+      const primaryReason = idx.reasons[0]?.reason || '';
+      const badge = `<span style="background:${idxColor === 'var(--green)' ? 'var(--green-dim)' : idxColor === 'var(--amber)' ? 'var(--amber-dim)' : 'var(--red-dim)'};border:1px solid ${idxColor};color:${idxColor};padding:2px 10px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:700" title="${primaryReason}">${idxIco} Indexable: ${idx.verdict}</span>`;
+   // Canonical validation badge
+      if (!$('canonicalBadge')) {
+        const cv = pg.canonicalValidation || validateCanonical(pg, pg.allCanonicals || []);
+        const cvVerdict = cv.findings.find(f => f.severity === 'critical') ? 'CRITICAL'
+          : cv.findings.find(f => f.severity === 'medium') ? 'WARN'
+          : cv.findings.find(f => f.verdict === 'SELF') ? 'OK'
+          : cv.findings.find(f => f.verdict === 'MISSING') ? 'MISSING' : 'OK';
+        const cvColor = cvVerdict === 'OK' ? 'var(--green)' : cvVerdict === 'CRITICAL' ? 'var(--red)' : 'var(--amber)';
+        const cvBg = cvVerdict === 'OK' ? 'var(--green-dim)' : cvVerdict === 'CRITICAL' ? 'var(--red-dim)' : 'var(--amber-dim)';
+        const cvSpan = document.createElement('span');
+        cvSpan.id = 'canonicalBadge';
+        const cvLabel = cvVerdict === 'OK' ? '✓ Canonical OK' : cvVerdict === 'MISSING' ? '⚠ No Canonical' : cvVerdict === 'CRITICAL' ? '✗ Canonical Error' : '⚠ Canonical Warn';
+        const cvTitle = cv.findings.map(f => f.detail).join(' | ');
+        cvSpan.innerHTML = `<span style="background:${cvBg};border:1px solid ${cvColor};color:${cvColor};padding:2px 10px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:700" title="${cvTitle}">${cvLabel}</span>`;
+        extraEl.appendChild(cvSpan);
+      }
+
+      // Append without replacing existing content
+      if (!$('indexabilityBadge')) {
+        const span = document.createElement('span');
+        span.id = 'indexabilityBadge';
+        span.innerHTML = badge;
+        extraEl.appendChild(span);
+      } else {
+        $('indexabilityBadge').innerHTML = badge;
+      }
+    }
   };
 })();
 
