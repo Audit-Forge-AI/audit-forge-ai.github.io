@@ -3020,33 +3020,52 @@ AuditForge.sitemap = {
     return { score, level, issues, urls, coverage, orphans, inSitemapNotCrawled };
   },
 
-  generateXML(urlList, baseUrl) {
-  const date = new Date().toISOString().split('T')[0];
+ generateXML(urlList, baseUrl) {
+    const date = new Date().toISOString().split('T')[0];
 
-  const uniqueUrls = [...new Set(
-    urlList.map(u => (u.url || u).replace(/\/$/, ''))
-  )];
+    const uniqueUrls = [...new Set(
+      urlList.map(u => (u.url || u).replace(/\/$/, ''))
+    )];
 
-  const urlEntries = uniqueUrls.map(loc => {
-    let isHome = false;
+    // Escape special XML characters in URLs (& is the main risk)
+    function xmlEscape(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
 
-    try {
-      isHome = loc === new URL(loc).origin;
-    } catch (e) {}
+    const urlEntries = uniqueUrls.map(rawLoc => {
+      let isHome = false;
+      let loc = rawLoc;
+      try {
+        const parsed = new URL(rawLoc);
+        isHome = (parsed.pathname === '' || parsed.pathname === '/');
+        loc = isHome ? (parsed.origin + '/') : rawLoc;
+      } catch (e) {}
 
-    return `  <url>
-    <loc>${isHome ? loc + '/' : loc}</loc>
-    <lastmod>${date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${isHome ? '1.00' : '0.90'}</priority>
-  </url>`;
-  }).join('\n');
+      const escapedLoc = xmlEscape(loc);
+      const priority = isHome ? '1.00' : '0.90';
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urlEntries}
-</urlset>`;
-}
+      return [
+        '  <url>',
+        '    <loc>' + escapedLoc + '</loc>',
+        '    <lastmod>' + date + '</lastmod>',
+        '    <changefreq>weekly</changefreq>',
+        '    <priority>' + priority + '</priority>',
+        '  </url>'
+      ].join('\n');
+    }).join('\n');
+
+    return [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      urlEntries,
+      '</urlset>'
+    ].join('\n');
+  }
 };
 /* ══════════════════════════════════════
    RECOMMENDATIONS ENGINE
@@ -3569,13 +3588,34 @@ AuditForge.recommendations = {
         <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:8px">
           Generates a sitemap from your crawled pages (${pages.filter(p=>p.status===200).length} live pages).
         </div>
-        <pre class="sitemap-gen-output" id="sitemapGenOutput">${AuditForge._genSitemap()}</pre>
+        <pre class="sitemap-gen-output" id="sitemapGenOutput"></pre>
+        <div id="sitemapValidationMsg" style="display:none;margin-bottom:8px;padding:7px 12px;border-radius:5px;font-family:var(--mono);font-size:11px"></div>
         <div class="robots-gen-btns">
           <button class="exp-btn" onclick="AuditForge._copySitemap()">Copy XML</button>
           <button class="exp-btn" onclick="AuditForge._downloadSitemap()">Download XML</button>
         </div>
       </div>`;
 
+    // Set sitemap content via textContent to prevent browser HTML-parsing the XML tags
+    const sitemapPre = $('sitemapGenOutput');
+    if (sitemapPre) {
+      const xml = AuditForge._genSitemap();
+      sitemapPre.textContent = xml;
+      // Validate and show warning if malformed
+      const validationMsg = $('sitemapValidationMsg');
+      if (validationMsg) {
+        const validation = AuditForge._validateSitemapXml(xml);
+        if (!validation.valid) {
+          validationMsg.style.display = 'block';
+          validationMsg.style.background = 'var(--amber-dim)';
+          validationMsg.style.border = '1px solid rgba(245,158,11,.3)';
+          validationMsg.style.color = 'var(--amber)';
+          validationMsg.textContent = '⚠ Sitemap validation: ' + validation.reason;
+        } else {
+          validationMsg.style.display = 'none';
+        }
+      }
+    }
     // Animate health bar
     setTimeout(() => {
       const fill = $('robotsHealthFill');
@@ -3617,16 +3657,54 @@ AuditForge._genSitemap = function() {
   if (!livePgs.length) return '<!-- Run an audit first to generate a sitemap -->';
   return AuditForge.sitemap.generateXML(livePgs);
 };
+
+AuditForge._validateSitemapXml = function(xml) {
+  if (!xml || !xml.trim()) return { valid: false, reason: 'Empty sitemap.' };
+  if (!xml.includes('<?xml')) return { valid: false, reason: 'Missing XML declaration (<?xml version="1.0" encoding="UTF-8"?>).' };
+  if (!xml.includes('<urlset')) return { valid: false, reason: 'Missing <urlset> root element.' };
+  if (!xml.includes('</urlset>')) return { valid: false, reason: 'Missing closing </urlset> tag.' };
+  if (!xml.includes('<loc>')) return { valid: false, reason: 'No <loc> elements found — sitemap contains no URLs.' };
+  const locMatches = (xml.match(/<loc>/g) || []).length;
+  const locCloseMatches = (xml.match(/<\/loc>/g) || []).length;
+  if (locMatches !== locCloseMatches) return { valid: false, reason: `Mismatched <loc> tags (${locMatches} open, ${locCloseMatches} close).` };
+  const urlMatches = (xml.match(/<url>/g) || []).length;
+  const urlCloseMatches = (xml.match(/<\/url>/g) || []).length;
+  if (urlMatches !== urlCloseMatches) return { valid: false, reason: `Mismatched <url> tags (${urlMatches} open, ${urlCloseMatches} close).` };
+  // Check all locs are absolute URLs
+  const locs = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1].trim());
+  const nonAbsolute = locs.filter(l => !l.startsWith('http'));
+  if (nonAbsolute.length) return { valid: false, reason: `${nonAbsolute.length} <loc> value(s) are not absolute URLs.` };
+  return { valid: true, reason: `Valid — ${urlMatches} URL(s)` };
+};
+
 AuditForge._copySitemap = function() {
-  const out = $('sitemapGenOutput'); if (!out) return;
-  navigator.clipboard.writeText(out.textContent).then(() => showToast('Sitemap XML copied'));
+  // Read from the pre element (single source of truth — set via textContent)
+  const out = $('sitemapGenOutput');
+  if (!out) return;
+  const xml = out.textContent;
+  const validation = AuditForge._validateSitemapXml(xml);
+  if (!validation.valid) {
+    showToast('⚠ Sitemap XML invalid: ' + validation.reason);
+    return;
+  }
+  navigator.clipboard.writeText(xml).then(() => showToast('✓ Sitemap XML copied (' + validation.reason + ')'));
 };
+
 AuditForge._downloadSitemap = function() {
-  const xml = AuditForge._genSitemap();
+  // Read from the pre element to guarantee preview and download are identical
+  const out = $('sitemapGenOutput');
+  const xml = out ? out.textContent : AuditForge._genSitemap();
+  const validation = AuditForge._validateSitemapXml(xml);
+  if (!validation.valid) {
+    showToast('⚠ Cannot download: ' + validation.reason);
+    return;
+  }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([xml], {type:'application/xml'}));
-  a.download = 'sitemap.xml'; a.click();
+  a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml; charset=utf-8' }));
+  a.download = 'sitemap.xml';
+  a.click();
 };
+
 
 /* ══════════════════════════════════════
    HOOK: openInspector extension
