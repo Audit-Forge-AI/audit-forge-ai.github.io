@@ -4197,8 +4197,9 @@ AuditForge._downloadSitemap = function() {
     }
 
 // Unlabelled form controls
-    if ((||0) > 0) {
-      extra.push({sev:'high',ico:'🟠',title:`${} Unlabelled Form Control(s)`,detail:`${} input(s)/select(s)/textarea(s) lack an associated label, aria-label, aria-labelledby, or title (WCAG 1.3.1, 4.1.2).`,fix:'Associate every form control with a <label for="id">, or add aria-label directly to the element.'});
+const _unlabelledButtons = pg.unlabelledButtons || 0;
+    if (_unlabelledButtons > 0) {
+      extra.push({sev:'high',ico:'🟠',title:_unlabelledButtons+' Unlabelled Button(s)',detail:_unlabelledButtons+' button(s) have no text, aria-label, aria-labelledby, or title. Screen readers cannot identify their purpose (WCAG 4.1.2).',fix:'Add descriptive aria-label attributes to icon-only buttons, e.g. <button aria-label="Close menu">.'});
     }
 
     // Unlabelled buttons
@@ -4217,8 +4218,10 @@ AuditForge._downloadSitemap = function() {
     }
 
     // Schema syntax errors
-    (pg.schemaErrors||[]).forEach(err=>{
-      extra.push({sev:'high',ico:'🟠',title:`Schema Syntax Error (Block ${err.block})`,detail:`JSON-LD block ${err.block} contains invalid JSON: ${err.message}. This schema block is completely ignored by Google.`,fix:'Validate your JSON-LD at https://validator.schema.org. Common causes: trailing commas, unescaped quotes, missing closing braces.'});
+   (pg.schemaErrors||[]).forEach(function(err){
+      const _eBlock = err.block || '?';
+      const _eMsg = err.message || 'unknown error';
+      extra.push({sev:'high',ico:'🟠',title:'Schema Syntax Error (Block '+_eBlock+')',detail:'JSON-LD block '+_eBlock+' contains invalid JSON: '+_eMsg+'. This schema block is completely ignored by Google.',fix:'Validate your JSON-LD at https://validator.schema.org. Common causes: trailing commas, unescaped quotes, missing closing braces.'});
     });
 
     // Hreflang
@@ -4226,17 +4229,16 @@ AuditForge._downloadSitemap = function() {
     if (hrefl && hrefl.present) {
       if (!hrefl.hasSelfHreflang) extra.push({sev:'high',ico:'🟠',title:'Missing Self-Referencing Hreflang',detail:'Hreflang tags found but no tag points back to this page\'s own URL. Google requires a self-reference in every hreflang set.',fix:'Add <link rel="alternate" hreflang="[lang]" href="[this-page-url]"> to the hreflang set.'});
       if (!hrefl.hasXDefault)    extra.push({sev:'medium',ico:'🔵',title:'Missing x-default Hreflang',detail:'No hreflang x-default tag found. x-default signals the fallback page for unmatched languages.',fix:'Add <link rel="alternate" hreflang="x-default" href="[fallback-url]">.'});
-      hrefl.issues.forEach(issue=>extra.push({sev:'high',ico:'🟠',title:'Invalid Hreflang Value',detail:issue,fix:'Use valid BCP-47 language codes (e.g. en, en-US, fr, zh-Hant). See https://developers.google.com/search/docs/specialty/international/localization'}));
-    }
+hrefl.issues.forEach(function(issue){ extra.push({sev:'high',ico:'🟠',title:'Invalid Hreflang Value',detail:issue,fix:'Use valid BCP-47 language codes (e.g. en, en-US, fr, zh-Hant).'}); });    }
 
 // Answer box
-    if ((pg.answerBoxCandidates||[]).length > 0) {
-      // positive signal — no issue, but surface as opportunity
-      extra.push({sev:'low',ico:'⚪',title:`${pg.answerBoxCandidates.length} Answer Box Candidate(s) Detected`,detail:`${pg.answerBoxCandidates.length} question heading(s) followed by a 40–70 word answer paragraph found. These are strong Featured Snippet and AI Overview candidates.`,fix:'Ensure each question heading uses exact phrasing users search for. Keep answer paragraphs concise (40–70 words). Add FAQPage schema to reinforce.'});
+   const _abCandidates = pg.answerBoxCandidates || [];
+    const _abCount = _abCandidates.length;
+    if (_abCount > 0) {
+      extra.push({sev:'low',ico:'⚪',title:_abCount+' Answer Box Candidate(s) Detected',detail:_abCount+' question heading(s) followed by a 40-70 word answer paragraph found. These are strong Featured Snippet and AI Overview candidates.',fix:'Ensure each question heading uses exact phrasing users search for. Keep answer paragraphs concise (40-70 words). Add FAQPage schema to reinforce.'});
     } else if (pg.status===200 && (pg.wordCount||0)>300) {
-      extra.push({sev:'low',ico:'⚪',title:'No Answer Box Candidates',detail:'No question headings followed by 40–70 word answer paragraphs detected. This content is unlikely to trigger Featured Snippets or AI Overviews.',fix:'Structure content as: Question Heading (H2/H3 ending in ?) followed by a direct 40–70 word answer paragraph before elaborating further.'});
+      extra.push({sev:'low',ico:'⚪',title:'No Answer Box Candidates',detail:'No question headings followed by 40-70 word answer paragraphs detected. This content is unlikely to trigger Featured Snippets or AI Overviews.',fix:'Structure content as: Question Heading (H2/H3 ending in ?) followed by a direct 40-70 word answer paragraph before elaborating further.'});
     }
-
     // E-E-A-T
     const eeatScore = pg.eeatScore !== undefined ? pg.eeatScore : 0;
     if (eeatScore < 40 && pg.status === 200 && (pg.wordCount || 0) > 200) {
