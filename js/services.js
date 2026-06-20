@@ -92,9 +92,8 @@ const PROXIES = [
 ];
 let proxyIndex = 0;
 
-async function proxyFetch(url, attempt=0){
-  if(attempt >= PROXIES.length) throw new Error('All proxies failed for: '+url);
-  let parsed;
+async function proxyFetch(url, attempt=0, _hopCount=0){
+  if(attempt >= PROXIES.length) throw new Error('All proxies failed for: '+url);  let parsed;
   try{ parsed=new URL(url); }catch(e){ throw new Error('Malformed URL'); }
   if(!parsed.protocol.startsWith('http')) throw new Error('Only http/https supported');
 
@@ -107,15 +106,16 @@ async function proxyFetch(url, attempt=0){
     finally{ clearTimeout(timer); }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const text=await r.text();
-    try{
+try{
       const d=JSON.parse(text);
       if(d && typeof d.contents==='string'){
         if(!d.contents) throw new Error('Empty proxy response');
-        return {html:d.contents, realStatus:d.status?.http_code||200};
+        const hopCount = (d.status?.response_code && d.status.response_code !== d.status.http_code) ? 1 : 0;
+        return {html:d.contents, realStatus:d.status?.http_code||200, redirectHops: hopCount};
       }
     }catch(e){}
     if(!text||text.length<50) throw new Error('Too short — likely blocked');
-    return {html:text, realStatus:200};
+    return {html:text, realStatus:200, redirectHops:0};
   }catch(e){
     console.warn('Proxy '+(proxyIndex+attempt)+' failed:', e.message);
     return proxyFetch(url, attempt+1);
@@ -688,13 +688,13 @@ async function crawl(){
   setStepState('crawl','active');
 const visited=new Set();
 const startUrl=normalizeUrl(root);
-const queue=[startUrl];
+const queue=[{url:startUrl,depth:0}];
 visited.add(startUrl);
   let done=0;
   while(queue.length&&done<maxP){
     const batch=queue.splice(0,2);
-    setProgress('Crawling: '+batch[0].replace(/https?:\/\//,'').slice(0,50),(done/maxP)*100);
-    await Promise.allSettled(batch.map(async pageUrl=>{
+    setProgress('Crawling: '+batch[0].url.replace(/https?:\/\//,'').slice(0,50),(done/maxP)*100);
+    await Promise.allSettled(batch.map(async ({url:pageUrl,depth:pageDepth})=>{
       if(done>=maxP) return;
       await new Promise(r=>setTimeout(r,500));
       let analysis, proxyResult=null;
@@ -704,8 +704,8 @@ visited.add(startUrl);
         statusInfo=resolveStatus(proxyResult, pageUrl);
         if(proxyResult&&proxyResult.html&&proxyResult.html.length>200){
           analysis=analyzePage(proxyResult.html, pageUrl);
-          extractLinks(proxyResult.html, pageUrl).forEach(l=>{
-            if(!visited.has(l)&&visited.size<maxP*4){ visited.add(l); queue.push(l); }
+extractLinks(proxyResult.html, pageUrl).forEach(l=>{
+            if(!visited.has(l)&&visited.size<maxP*4){ visited.add(l); queue.push({url:l,depth:pageDepth+1}); }
           });
         }
       }catch(e){
@@ -718,7 +718,8 @@ visited.add(startUrl);
       const fullScores = AuditForge.scores.compute(extended);
       if (fullScores) extended.score = fullScores.overall;
 const soft404Result = detectSoft404({...extended, status: statusInfo.status});
-      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random(),soft404:soft404Result.isSoft404,soft404Zone:soft404Result.matchedIn};
+      const redirectHops = (proxyResult&&proxyResult.redirectHops)||0;
+      const pg={...extended,status:statusInfo.status,statusLabel:statusInfo.label,statusCls:statusInfo.cls,url:normalizeUrl(pageUrl),id:'pg'+Date.now()+Math.random(),soft404:soft404Result.isSoft404,soft404Zone:soft404Result.matchedIn,depth:pageDepth,redirectHops};
       pages.push(pg); done++;
       addRow(pg); updateStats();
     }));
@@ -741,6 +742,57 @@ const soft404Result = detectSoft404({...extended, status: statusInfo.status});
       }
     });
   });
+
+// Canonical chain / loop / broken canonical analysis
+  window._canonicalIssues = {};
+  const crawledUrlSet = new Set(pages.map(p => p.url));
+  pages.forEach(pg => {
+    if (!pg.canonical || !pg.url) return;
+    const normCan = normalizeUrl(pg.canonical);
+    const normPg  = pg.url;
+    if (normCan === normPg) return; // self-referencing — fine
+
+    // Canonical points to uncrawled URL
+    if (!crawledUrlSet.has(normCan)) {
+      window._canonicalIssues[pg.url] = {type:'uncrawled', target: pg.canonical};
+      return;
+    }
+
+    // Detect chain: A→B→C
+    const targetPg = pages.find(p => p.url === normCan);
+    if (targetPg && targetPg.canonical) {
+      const normTargetCan = normalizeUrl(targetPg.canonical);
+      if (normTargetCan !== normCan) {
+        // Chain detected
+        if (normTargetCan === normPg) {
+          // Loop: A→B→A
+          window._canonicalIssues[pg.url] = {type:'loop', target: pg.canonical, loopBack: normTargetCan};
+        } else {
+          window._canonicalIssues[pg.url] = {type:'chain', target: pg.canonical, finalTarget: normTargetCan};
+        }
+      }
+    }
+  });
+
+// Near-duplicate content detection (keyword overlap ≥ 70%)
+  window._nearDuplicates = {};
+  const livePagesForDup = pages.filter(p => p.status === 200 && p.keywords && p.keywords.top10 && p.keywords.top10.length >= 5);
+  for (let i = 0; i < livePagesForDup.length; i++) {
+    for (let j = i + 1; j < livePagesForDup.length; j++) {
+      const a = livePagesForDup[i];
+      const b = livePagesForDup[j];
+      const setA = new Set(a.keywords.top10.slice(0,10).map(k=>k.word));
+      const setB = new Set(b.keywords.top10.slice(0,10).map(k=>k.word));
+      const intersection = [...setA].filter(w => setB.has(w)).length;
+      const overlap = intersection / Math.min(setA.size, setB.size);
+      if (overlap >= 0.70) {
+        if (!window._nearDuplicates[a.url]) window._nearDuplicates[a.url] = [];
+        if (!window._nearDuplicates[b.url]) window._nearDuplicates[b.url] = [];
+        window._nearDuplicates[a.url].push({url: b.url, overlap: Math.round(overlap*100)});
+        window._nearDuplicates[b.url].push({url: a.url, overlap: Math.round(overlap*100)});
+      }
+    }
+  }
 
   setProgress('Audit complete — '+pages.length+' pages analyzed',100);
   if(btn){btn.disabled=false;btn.classList.remove('loading');}
@@ -2252,9 +2304,66 @@ function _extendPageAnalysis(result, html, url) {
       : authorityLinks.length >= 1 || (result.citationCount >= 4) ? 75
       : 50;
 
+// ── E-E-A-T Signals ──
+    const eeat = {
+      hasPersonSchema:   false,
+      hasAuthorSchema:   false,
+      hasAuthorRel:      false,
+      hasDatePublished:  false,
+      hasDateModified:   false,
+      bylineFound:       false,
+      bylineName:        '',
+      authorName:        ''
+    };
+
+    // Person / author schema
+    doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+      try {
+        const j = JSON.parse(s.textContent || '');
+        const check = node => {
+          if (!node || typeof node !== 'object') return;
+          if (/^Person$/i.test(node['@type'])) eeat.hasPersonSchema = true;
+          if (node.author) {
+            eeat.hasAuthorSchema = true;
+            const a = node.author;
+            eeat.authorName = (typeof a === 'string' ? a : a.name) || '';
+          }
+          if (node.datePublished) eeat.hasDatePublished = true;
+          if (node.dateModified)  eeat.hasDateModified  = true;
+          if (Array.isArray(node['@graph'])) node['@graph'].forEach(check);
+        };
+        check(j);
+      } catch(e) {}
+    });
+
+    // rel="author"
+    if (doc.querySelector('a[rel="author"],link[rel="author"]')) eeat.hasAuthorRel = true;
+
+    // datePublished / dateModified in meta/time elements
+    if (!eeat.hasDatePublished) eeat.hasDatePublished = !!(
+      doc.querySelector('meta[property="article:published_time"],time[itemprop="datePublished"],[itemprop="datePublished"]')
+    );
+    if (!eeat.hasDateModified) eeat.hasDateModified = !!(
+      doc.querySelector('meta[property="article:modified_time"],time[itemprop="dateModified"],[itemprop="dateModified"]')
+    );
+
+    // Byline patterns in body text
+    const bylineMatch = bodyText.match(/\bBy\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/);
+    if (bylineMatch) { eeat.bylineFound = true; eeat.bylineName = bylineMatch[1]; }
+
+    // eeatScore (0–100)
+    let eeatScore = 0;
+    if (eeat.hasPersonSchema)  eeatScore += 25;
+    if (eeat.hasAuthorSchema)  eeatScore += 20;
+    if (eeat.hasAuthorRel)     eeatScore += 15;
+    if (eeat.bylineFound)      eeatScore += 15;
+    if (eeat.hasDatePublished) eeatScore += 15;
+    if (eeat.hasDateModified)  eeatScore += 10;
+    result.eeat = eeat;
+    result.eeatScore = Math.min(100, eeatScore);
+
     // ── List / Table density ──
-    const totalWords = result.wordCount || 1;
-    const listItems = doc.querySelectorAll('li').length;
+    const totalWords = result.wordCount || 1;    const listItems = doc.querySelectorAll('li').length;
     result.listDensity = Math.min(100, Math.round((listItems / (totalWords / 100)) * 10));
     result.tableDensity = Math.min(100, (result.hasTables || 0) * 25);
 
@@ -2458,6 +2567,8 @@ function _ensureExtended(pg) {
         hasSemantics:   !!(pg.hasSemantic)
       };
     }
+if (!pg.eeat) pg.eeat = {hasPersonSchema:false,hasAuthorSchema:false,hasAuthorRel:false,hasDatePublished:false,hasDateModified:false,bylineFound:false,bylineName:'',authorName:''};
+    if (pg.eeatScore === undefined) pg.eeatScore = 0;
     if (!pg.hasSocialTags) pg.hasSocialTags = !!(pg.ogTitle || pg.twitterCard);
     if (!pg.ogTitle) pg.ogTitle = '';
     if (!pg.ogDesc) pg.ogDesc = '';
@@ -3934,6 +4045,45 @@ AuditForge._downloadSitemap = function() {
 
 // Store on pg for display elsewhere
     pg._indexability = indexability;
+
+// Near duplicate content
+    const dupCandidates = (window._nearDuplicates || {})[pg.url];
+    if (dupCandidates && dupCandidates.length) {
+      const best = dupCandidates.sort((a,b)=>b.overlap-a.overlap)[0];
+      extra.push({sev:'medium',ico:'🔵',title:'Near Duplicate Content',detail:`${best.overlap}% keyword overlap with ${best.url.replace(/https?:\/\/[^/]+/,'')||'/'}. ${dupCandidates.length} similar page(s) detected. May cause keyword cannibalization.`,fix:'Consolidate overlapping pages via 301 redirect or canonical tag, or differentiate content to target distinct keywords.'});
+    }
+
+    // Canonical chain / loop / broken
+    const canIssue = (window._canonicalIssues || {})[pg.url];
+    if (canIssue) {
+      if (canIssue.type === 'loop') {
+        extra.push({sev:'critical',ico:'🔴',title:'Canonical Loop Detected',detail:`This page canonicals to ${canIssue.target}, which canonicals back to this page (A→B→A loop). Google ignores looped canonicals.`,fix:'Set a single authoritative URL and point all canonicals to it directly.'});
+      } else if (canIssue.type === 'chain') {
+        extra.push({sev:'high',ico:'🟠',title:'Canonical Chain Detected',detail:`This page canonicals to ${canIssue.target}, which itself canonicals to ${canIssue.finalTarget} (A→B→C chain). Google may not follow chains.`,fix:'Update this page\'s canonical to point directly to the final destination: '+canIssue.finalTarget});
+      } else if (canIssue.type === 'uncrawled') {
+        extra.push({sev:'medium',ico:'🔵',title:'Canonical Points to Uncrawled URL',detail:`Canonical target ${canIssue.target} was not found in the crawl. It may be external, redirected, or missing.`,fix:'Verify the canonical URL is live and accessible. Use Paste mode to audit it directly.'});
+      }
+    }
+
+    // Redirect chain
+    if ((pg.redirectHops || 0) >= 2) {      extra.push({sev:'high',ico:'🟠',title:'Redirect Chain Detected',detail:`${pg.redirectHops} redirect hop(s) detected before reaching this URL. Chains dilute PageRank and slow page load.`,fix:'Update all internal links and sitemap entries to point directly to the final destination URL. Collapse the redirect chain to a single 301.'});
+    }
+
+// E-E-A-T
+    const eeatScore = pg.eeatScore !== undefined ? pg.eeatScore : 0;
+    if (eeatScore < 40 && pg.status === 200 && (pg.wordCount || 0) > 200) {
+      const missing = [];
+      const e = pg.eeat || {};
+      if (!e.hasAuthorSchema && !e.hasAuthorRel && !e.bylineFound) missing.push('author attribution');
+      if (!e.hasDatePublished) missing.push('datePublished');
+      if (!e.hasPersonSchema)  missing.push('Person schema');
+      extra.push({sev:'medium',ico:'🔵',title:'Weak E-E-A-T Signals',detail:`E-E-A-T score: ${eeatScore}/100. Missing: ${missing.join(', ') || 'multiple signals'}.`,fix:'Add author byline with rel="author", Person schema, Article schema with author + datePublished + dateModified fields. Link to an About/Author page.'});
+    }
+
+    // Crawl depth
+    if ((pg.depth || 0) >= 4) {
+       extra.push({sev:'medium',ico:'🔵',title:'Deep Crawl Depth',detail:`Page is ${pg.depth} clicks from root. Pages beyond depth 3 receive less PageRank and may be crawled infrequently.`,fix:'Reduce click depth by adding internal links from higher-level pages or including the URL in your sitemap.'});
+    }
 
     // Soft-404 detection
     if (!pg.soft404 && pg.status === 200) {
