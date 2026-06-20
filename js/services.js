@@ -2208,11 +2208,10 @@ doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
       + Math.min(6, schemaFaqQuestions)
       + Math.min(3, deduplicatedQHeadings)
       + Math.min(1, Math.floor(questionSentences / 5));
-    result.faqCount = Math.min(faqScore, 20);
+result.faqCount = Math.min(faqScore, 20);
     result.qHeadingCount = allQHeadings.length;
-     result.hasFAQPageSchema = hasFAQPageSchema;
+    result.hasFAQPageSchema = hasFAQPageSchema;
     result.schemaFaqQuestions = schemaFaqQuestions;
-    result.qHeadingCount = qHeadings.length;
 
 
 // ── Entity detection ──
@@ -2516,7 +2515,10 @@ result.aiSignals = {
     };
 
     // ── Canonical validation ──
-    result.allCanonicals = allCanonicals || [];
+    const _localAllCanonicals = [...doc.querySelectorAll('link[rel="canonical"]')]
+      .map(el => el.getAttribute('href')?.trim() || '')
+      .filter(Boolean);
+    result.allCanonicals = _localAllCanonicals;
     result.canonicalValidation = validateCanonical(result, result.allCanonicals);
 
     // ── Schema type detection ──
@@ -2718,10 +2720,14 @@ AuditForge.scores = {
     deductions.technical = techD;
     const technicalSEO = Math.max(0, Math.min(100, tech));
 
-    // ── Content Quality ──
+// ── Content Quality ──
     let content = 100;
     const contentD = [];
     const wc = pg.wordCount || 0;
+    const _pt = pg.pageType || detectPageType(pg);
+    const _skipFAQ = ['contact','privacy','terms','homepage','category'].includes(_pt);
+    const _skipDef = ['contact','privacy','terms'].includes(_pt);
+    const _skipList = ['contact','privacy','terms'].includes(_pt);
     if (wc < 100)        { content -= 25; contentD.push({l:'Very thin content (<100 words)',  v:-25}); }
     else if (wc < 300)   { content -= 15; contentD.push({l:'Thin content (<300 words)',       v:-15}); }
     else if (wc < 600)   { content -= 5;  contentD.push({l:'Moderate content (<600 words)',    v:-5}); }
@@ -2732,10 +2738,6 @@ AuditForge.scores = {
       else if (pg.readability.flesch < 50)  { content -= 6;  contentD.push({l:'Difficult readability', v:-6}); }
       if (pg.readability.avgSentenceLength > 35) { content -= 5; contentD.push({l:'Very long sentences', v:-5}); }
     }
-const _pt = pg.pageType || detectPageType(pg);
-    const _skipFAQ = ['contact','privacy','terms','homepage','category'].includes(_pt);
-    const _skipDef = ['contact','privacy','terms'].includes(_pt);
-    const _skipList = ['contact','privacy','terms'].includes(_pt);
     if (!_skipFAQ && (!pg.faqCount || pg.faqCount < 2)) { content -= 8; contentD.push({l:'No FAQ content detected', v:-8}); }
     if (!_skipDef && pg.definitionCount < 1)             { content -= 5; contentD.push({l:'No definitions found',    v:-5}); }
     deductions.content = contentD;
@@ -4201,12 +4203,6 @@ const _unlabelledButtons = pg.unlabelledButtons || 0;
     if (_unlabelledButtons > 0) {
       extra.push({sev:'high',ico:'🟠',title:_unlabelledButtons+' Unlabelled Button(s)',detail:_unlabelledButtons+' button(s) have no text, aria-label, aria-labelledby, or title. Screen readers cannot identify their purpose (WCAG 4.1.2).',fix:'Add descriptive aria-label attributes to icon-only buttons, e.g. <button aria-label="Close menu">.'});
     }
-
-    // Unlabelled buttons
-    if ((pg.unlabelledButtons||0) > 0) {
-      extra.push({sev:'high',ico:'🟠',title:`${pg.unlabelledButtons} Unlabelled Button(s)`,detail:`${pg.unlabelledButtons} button(s) have no text, aria-label, aria-labelledby, or title. Screen readers cannot identify their purpose (WCAG 4.1.2).`,fix:'Add descriptive aria-label attributes to icon-only buttons, e.g. <button aria-label="Close menu">.'});
-    }
-
     // Viewport
     if (pg.hasViewport === false) {
        extra.push({sev:'medium',ico:'🔵',title:'Missing Viewport Meta Tag',detail:'No <meta name="viewport"> found. Mobile browsers will render at desktop width, causing poor mobile UX and hurting mobile SEO.',fix:'Add <meta name="viewport" content="width=device-width, initial-scale=1"> inside <head>.'});
