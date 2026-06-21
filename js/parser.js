@@ -11,9 +11,15 @@ function normalizeUrl(url){
     const u=new URL(url);
     let path=u.pathname;
     path=path.replace(/\/index(\.html?)?$/i,'/');
+    if(path.endsWith('.html')){
+      path=path.slice(0,-5);
+    }else if(path.endsWith('.htm')){
+      path=path.slice(0,-4);
+    }
     if(path.length>1 && path.endsWith('/')){
       path=path.slice(0,-1);
     }
+    if(!path) path = '/';
     return u.origin + path;
   }catch(e){
     return url;
