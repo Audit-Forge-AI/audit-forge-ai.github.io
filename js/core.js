@@ -32,13 +32,15 @@ let pages = [], maxP = 10, crawling = false, curPage = null;
    NAVIGATION
    ══════════════════════════════════════ */
 function showPanel(id){
-  $$('.panel').forEach(p=>p.classList.remove('active'));
+  $$('.panel').forEach(p=>{
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
   $$('.nav-item').forEach(n=>n.classList.remove('active'));
   const pan=$('panel-'+id); 
   if(pan) {
     pan.classList.add('active');
-    if(id === 'hero') pan.style.display = 'flex';
-    else pan.style.display = 'flex';
+    pan.style.display = 'flex';
   }
   const nav=document.querySelector(`.nav-item[data-panel="${id}"]`);
   if(nav) nav.classList.add('active');
