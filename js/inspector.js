@@ -443,63 +443,7 @@ function loadLinks(pg){
     </div>`;
 }
 
-/* ══════════════════════════════════════
-   MODULE 9 — ROBOTS + SITEMAP (transient viewer)
-   ══════════════════════════════════════ */
-function loadRobotsSitemap(pg){
-  const wrap=$('mod-robotssitemap'); if(!wrap) return;
-  const robots=window._lastRobots||{found:false};
-  const sitemap=window._lastSitemap||{found:false};
 
-  const robotsChecks=[
-    {ok:robots.found, text:'robots.txt present', rec:robots.found?null:'Create a robots.txt file at your domain root.'},
-    {ok:!robots.disallowAll, text:'No blanket Disallow: /', rec:robots.disallowAll?'⚠ Your site is blocking ALL crawlers — check if intentional.':null},
-    {ok:robots.hasSitemap, text:'Sitemap declared in robots.txt', rec:robots.hasSitemap?null:'Add "Sitemap: https://yoursite.com/sitemap.xml" to robots.txt'},
-  ];
-  const sitemapChecks=[
-    {ok:sitemap.found, text:'sitemap.xml found', rec:sitemap.found?null:'Create a sitemap.xml for better crawlability.'},
-    {ok:sitemap.isValidXml, text:'Valid XML structure', rec:sitemap.isValidXml?null:'Validate your sitemap at https://www.xml-sitemaps.com/validate-xml-sitemap.html'},
-  ];
-
-  wrap.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div class="robots-card">
-        <div class="robots-status">
-          <div class="robots-icon">${robots.found?'🤖':'⛔'}</div>
-          <div>
-            <div style="font-weight:700;font-size:13px">${robots.found?'robots.txt Found':'robots.txt Missing'}</div>
-            <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${robots.found?'Crawl rules detected':'No crawl restrictions set'}</div>
-          </div>
-        </div>
-        ${robotsChecks.map(c=>`
-          <div class="check-row">
-            <span class="check-icon">${c.ok?'✅':'❌'}</span>
-            <div>
-              <div class="check-text">${c.text}</div>
-              ${c.rec?`<div class="check-rec">→ ${c.rec}</div>`:''}
-            </div>
-          </div>`).join('')}
-        ${robots.content?`<div class="robots-pre">${robots.content.slice(0,600).replace(/</g,'&lt;')}</div>`:''}
-      </div>
-      <div class="robots-card">
-        <div class="robots-status">
-          <div class="robots-icon">${sitemap.found?'🗺️':'⛔'}</div>
-          <div>
-            <div style="font-weight:700;font-size:13px">${sitemap.found?'sitemap.xml Found':'sitemap.xml Missing'}</div>
-            ${sitemap.found?`<div class="sitemap-url-count">${sitemap.urlCount} <span style="font-size:13px;color:var(--text3);font-family:var(--mono)">URLs indexed</span></div>`:''}
-          </div>
-        </div>
-        ${sitemapChecks.map(c=>`
-          <div class="check-row">
-            <span class="check-icon">${c.ok?'✅':'❌'}</span>
-            <div>
-              <div class="check-text">${c.text}</div>
-              ${c.rec?`<div class="check-rec">→ ${c.rec}</div>`:''}
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-}
 
 /* ══════════════════════════════════════
    MODULE 10 — ISSUE PRIORITIZATION
