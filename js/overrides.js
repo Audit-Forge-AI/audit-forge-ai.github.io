@@ -159,24 +159,48 @@ function _extendPageAnalysis(result, html, url) {
     result.entityCount = Math.min(entitySet.size, 30);
     result.topEntities = [...entitySet].slice(0, 10);
 
-    // ── Definition detection ──
-    const defPatterns = [
-      /\b[A-Z][a-zA-Z]{2,30}\s+(?:is|are)\s+(?:a|an|the)\s+[a-z]/g,
-      /\b[A-Z][a-zA-Z\s]{2,30}(?:is\s+)?defined\s+as\b/gi,
-      /\b[A-Z][a-zA-Z\s]{2,30}refers\s+to\b/gi,
-      /\b[A-Z][a-zA-Z\s]{2,30}(?:also\s+)?known\s+as\b/gi,
-      /\([^)]{3,40}\)\s+means\b/gi,
-      /\bthe\s+term\s+["']?[A-Z][^"']{2,30}["']?\s+(?:means|refers|describes)\b/gi
-    ];
+    // ── Definition detection (Robust, precise, and low false-positives) ──
     let definitionCount = 0;
-    defPatterns.forEach(p => {
-      const hits = (bodyText.match(p) || []);
-      const filtered = hits.filter(h =>
-        !/^(This|It|That|There|He|She|They|We|You|I|Here)\s/i.test(h.trim())
-      );
-      definitionCount += filtered.length;
+
+    // 1. Check HTML Definition lists (<dl><dt><dd>)
+    const dlElements = doc.querySelectorAll('dl');
+    dlElements.forEach(dl => {
+      const dts = dl.querySelectorAll('dt');
+      const dds = dl.querySelectorAll('dd');
+      definitionCount += Math.min(dts.length, dds.length);
     });
-    result.definitionCount = Math.min(definitionCount, 15);
+
+    // 2. Check bold/strong term definition patterns
+    const boldElements = doc.querySelectorAll('strong, b, code');
+    boldElements.forEach(el => {
+      const text = (el.textContent || '').trim();
+      if (text.length > 2 && text.length < 40 && text.split(' ').length <= 4) {
+        const parentText = el.parentNode ? (el.parentNode.textContent || '') : '';
+        const indexInParent = parentText.indexOf(text);
+        if (indexInParent !== -1) {
+          const afterText = parentText.substring(indexInParent + text.length).trim();
+          const verbMatch = /^(?:is|are|refers to|refer to|defined as|means|denotes|represents)\s+(?:a|an|the|our|your|to|process|system|method|concept|technique|practice|standard|protocol|framework|tool|strategy|application|software|service|collection|set|group|type|form)\b/i.test(afterText);
+          if (verbMatch) {
+            definitionCount++;
+          }
+        }
+      }
+    });
+
+    // 3. Sentence-level linguistic pattern extraction
+    const sentences = bodyText.split(/[.!?\n]+/).map(s => s.trim()).filter(s => s.length > 15);
+    const pronounStoplist = /^(he|she|it|they|we|you|i|this|that|there|these|those|here|there|what|who|where|when|why|how|which|whose|one|another|each|some|someone|somebody|something|everyone|everybody|everything|anyone|anybody|anything|noone|nobody|nothing|all|any|both|few|many|most|other|such|today|yesterday|tomorrow|now|then|first|second|third|finally|next|last|also|instead|however|therefore|indeed|meanwhile|specifically|conversely|unfortunately|fortunately)\b/i;
+    const defRegex = /\b(is|are|refers to|refer to|defined as|means|denotes|represents)\s+(a|an|the|our|your|to|process|system|method|concept|technique|practice|standard|protocol|framework|tool|strategy|application|software|service|collection|set|group|type|form)\s+[A-Za-z0-9]/i;
+
+    sentences.forEach(sentence => {
+      if (!pronounStoplist.test(sentence)) {
+        if (defRegex.test(sentence) && sentence.length < 180) {
+          definitionCount++;
+        }
+      }
+    });
+
+    result.definitionCount = Math.min(Math.max(definitionCount, 0), 15);
 
     // ── Knowledge chunk detection ──
     const paras = [...doc.querySelectorAll('p')].filter(p => {
