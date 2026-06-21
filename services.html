@@ -695,7 +695,18 @@
         </div><!-- /main -->
     </div><!-- /app -->
 
-    <!-- External JS -->
-    <script src="js/services.js"></script>
+   <!-- External JS Scripts loaded in proper sequential order -->
+    <script src="js/core.js"></script>
+    <script src="js/parser.js"></script>
+    <script src="js/crawler.js"></script>
+    <script src="js/analysis.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/recommendations.js"></script>
+    <script src="js/robots-sitemap.js"></script>
+    <script src="js/inspector.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/exports.js"></script>
+    <script src="js/overrides.js"></script>
+    <script src="js/app-init.js"></script>
 </body>
 </html>
