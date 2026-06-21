@@ -47,8 +47,8 @@ function showPanel(id){
 $$('.nav-item[data-panel]').forEach(n=>n.addEventListener('click',()=>showPanel(n.dataset.panel)));
 $('backBtn') && $('backBtn').addEventListener('click',()=>showPanel('crawler'));
 
-$('navExport') && $('navExport').addEventListener('click', exportReport);
-$('exportBtn') && $('exportBtn').addEventListener('click', exportReport);
+$('navExport') && $('navExport').addEventListener('click', () => exportReport());
+$('exportBtn') && $('exportBtn').addEventListener('click', () => exportReport());
 
 $('navInspector') && $('navInspector').addEventListener('click',()=>{
   if(pages.length){ showPanel('inspector'); }
