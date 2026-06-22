@@ -767,6 +767,43 @@
                     <button class="mtab" onclick="triggerPDFExport()">🖨 White-Label PDF</button>
                 </div>
 
+                <!-- API KEYS CONFIGURATION DRAWER (Saved 100% locally for Static Deployments) -->
+                <div class="card" style="margin-top:12px;background:rgba(16,185,129,0.02);border:1.5px solid var(--border);padding:14px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="const b = $('collapsibleKeySection'); b.style.display = b.style.display === 'none' ? 'block' : 'none'">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:16px">🔑</span>
+                            <div>
+                                <div style="font-size:12px;font-weight:700;color:var(--text1)">Static Deploy & Local API Configuration Gateway</div>
+                                <div style="font-size:10px;color:var(--text3)">Required for direct AI and PageSpeed requests when browsing on static GitHub Pages. Stored 100% locally.</div>
+                            </div>
+                        </div>
+                        <div style="font-size:11px;font-family:var(--mono);color:#10B981;font-weight:700">Toggle Setup Controls ▾</div>
+                    </div>
+
+                    <div id="collapsibleKeySection" style="display:none;margin-top:14.px;border-top:1px solid var(--border);padding-top:12px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14.px">
+                            <div>
+                                <label style="font-size:10px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px">Google Gemini AI Pro API Key</label>
+                                <input type="password" id="customGeminiKeyInput" placeholder="Paste Gemini API Key (AI-Studio)..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--text1)" oninput="localStorage.setItem('custom_gemini_api_key', this.value.trim()); if(this.value.trim()){showToast('Gemini local key configured!');}" />
+                                <div style="font-size:10px;color:var(--text3);margin-top:4px">
+                                  Used for Consultant Chat & Brief outlines. <a href="https://aistudio.google.com/" target="_blank" style="color:#10B981;text-decoration:underline">Get Free API Key here ↗</a>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="font-size:10px;font-weight:700;color:var(--text2);display:block;margin-bottom:4px">Google PageSpeed Insights API Key</label>
+                                <input type="password" id="customPageSpeedKeyInput" placeholder="Paste PageSpeed API Key (Optional)..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--text1)" oninput="localStorage.setItem('custom_pagespeed_api_key', this.value.trim()); if(this.value.trim()){showToast('PageSpeed key saved!');}" />
+                                <div style="font-size:10px;color:var(--text3);margin-top:4px">
+                                  Used for live speed and accessibility evaluations. <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" style="color:#10B981;text-decoration:underline">Get Key on Google Cloud Console ↗</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size:10px;color:var(--text3);margin-top:10px;border-top:1.5px dashed var(--border);padding-top:8px;font-family:var(--mono)">
+                            🛡️ <strong>Safety Guarantee:</strong> Your API credentials are saved exclusively inside your browser's private Web Storage (<code style="color:#10B981">window.localStorage</code>). They are spent directly on matching Google endpoints and <strong>never</strong> transfer to any third-party databases.
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SUB PANELS -->
                 <div id="ai-sub-consultant" class="ai-pane active" style="width:100%;margin-top:14px">
                     <div class="card pb-6" style="display:flex;flex-direction:column;height:420px">
