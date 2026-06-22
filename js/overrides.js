@@ -459,6 +459,10 @@ function _extendPageAnalysis(result, html, url) {
     result.hasProductSchema   = result.schemaTypes.some(t => /Product/i.test(t));
     result.hasBreadcrumbSchema = result.schemaTypes.some(t => /BreadcrumbList/i.test(t));
 
+    result.scriptCount = doc.querySelectorAll('script').length;
+    result.cssCount = doc.querySelectorAll('link[rel="stylesheet"]').length;
+    result.htmlLength = html.length;
+
   } catch(e) {
     console.warn('AuditForge: _extendPageAnalysis error', e);
   }
@@ -781,10 +785,12 @@ function _ensureExtended(pg) {
 (function hookOpenInspector() {
   const _orig = window.openInspector;
   window.openInspector = function(id) {
-    _orig(id);
     const pg = pages.find(p => p.id === id);
     if (pg) {
       _ensureExtended(pg);
+    }
+    _orig(id);
+    if (pg) {
       const robotsPane = $('mod-robots');
       if (robotsPane && robotsPane.classList.contains('active')) {
         loadRobotsSitemap(pg);
