@@ -33,7 +33,20 @@ function saveToHistory(url, pagesData){
       noH1:pagesData.filter(p=>p.h1s&&!p.h1s.length&&p.status===200).length,
       noDesc:pagesData.filter(p=>!p.desc&&p.status===200).length
     },
-    pages: pagesData.map(p=>({id:p.id,url:p.url,score:p.score,aiScore:p.aiScore,status:p.status,title:p.title}))
+    pages: pagesData.map(p=>{
+      const cleanPg = { ...p };
+      // Ensure metrics are computed and marked extended before saving
+      if (typeof _ensureExtended === 'function') {
+        _ensureExtended(cleanPg);
+      }
+      if (cleanPg.bodyText && cleanPg.bodyText.length > 1000) {
+        cleanPg.bodyText = cleanPg.bodyText.slice(0, 1000);
+      }
+      if (cleanPg.html && cleanPg.html.length > 10) {
+        cleanPg.html = ''; // Do not persist heavy full HTML raw content in localStorage
+      }
+      return cleanPg;
+    })
   };
   // Remove old entry with same URL
   const deduped=history.filter(h=>h.url!==url);
@@ -83,8 +96,11 @@ function reopenHistoryAudit(id){
   pages=entry.pages.map(p=>({
     ...p,
     h1s:p.h1s||[], missingAlt:p.missingAlt||0, headingNodes:p.headingNodes||[],
-    imgData:[], internalLinks:[], keywords:null, readability:null,
-    hasSchema:0, hasSemantic:0, hasLists:0, hasTables:0,
+    imgData:p.imgData||[], internalLinks:p.internalLinks||[], keywords:p.keywords||null, readability:p.readability||null,
+    hasSchema:p.hasSchema!==undefined?p.hasSchema:0,
+    hasSemantic:p.hasSemantic!==undefined?p.hasSemantic:0,
+    hasLists:p.hasLists!==undefined?p.hasLists:0,
+    hasTables:p.hasTables!==undefined?p.hasTables:0,
     statusLabel:p.status===200?'200 OK':p.status?p.status+' Err':'Proxy Err',
     statusCls:p.status===200?'s200':p.status===404?'s404':'soth',
     id:p.id||('hist'+Math.random())
