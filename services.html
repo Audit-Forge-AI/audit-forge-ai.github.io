@@ -197,6 +197,15 @@
                     <span class="ico">⚖</span> Comparison
                 </div>
                 <div class="nav-sec">Analysis</div>
+                <div class="nav-item" data-panel="sitewide" id="navSiteWide">
+                    <span class="ico">📊</span> Site-Wide Issues
+                </div>
+                <div class="nav-item" data-panel="graph" id="navGraph">
+                    <span class="ico">🕸</span> Link Graph Visualizer
+                </div>
+                <div class="nav-item" data-panel="ai" id="navAI">
+                    <span class="ico">🧠</span> AI SEO Studio
+                </div>
                 <div class="nav-item" data-panel="inspector" id="navInspector">
                     <span class="ico">◈</span> Page Inspector
                     <span class="nbadge g" id="pageBadge" style="display:none">0</span>
@@ -551,6 +560,8 @@
                     <button class="mtab" data-mod="links">Links</button>
                     <button class="mtab" data-mod="schema">Schema</button>
                     <button class="mtab" data-mod="robots">Robots & Sitemap</button>
+                    <button class="mtab" data-mod="pagespeed">Pagespeed / CWV</button>
+                    <button class="mtab" data-mod="security">Security</button>
                     <button class="mtab" data-mod="ai">AI Radar</button>
                     <button class="mtab" data-mod="issues">Issues <span class="nbadge r" id="issueBadge">0</span></button>
                     <button class="mtab" data-mod="suggestions">AI Tips</button>
@@ -619,6 +630,7 @@
 
                 <!-- Schema pane — unchanged layout, schema-out class added for proper flex -->
                 <div class="mpane" id="mod-schema">
+                    <div id="mod-schema-container"></div>
                     <div class="schema-layout">
                         <div>
                             <select class="schema-sel" id="schemaType" onchange="buildSchemaFields()"></select>
@@ -662,6 +674,24 @@
                     </div>
                 </div>
 
+                <div class="mpane" id="mod-pagespeed">
+                    <div id="mod-pagespeed-container">
+                        <div style="text-align:center;padding:40px;color:var(--text3)">
+                            <h3>PageSpeed Insights Gateway</h3>
+                            <p style="font-size:12px;margin-top:6px">Select a crawled page to inspect speed milestones & CWV scores.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mpane" id="mod-security">
+                    <div id="mod-security-container">
+                        <div style="text-align:center;padding:40px;color:var(--text3)">
+                            <h3>Response Headers Security</h3>
+                            <p style="font-size:12px;margin-top:6px">Select a crawled page to analyze security header compliances.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mpane" id="mod-issues"></div>
                 <div class="mpane" id="mod-suggestions"></div>
             </div>
@@ -692,10 +722,165 @@
                 <div id="compareResult"></div>
             </div>
 
+            <!-- ══ SITE-WIDE PANELS ══ -->
+            <div class="panel" id="panel-sitewide">
+                <div>
+                    <div class="ph">Site-Wide Issues Dashboard</div>
+                    <div class="ps">Consolidated optimization errors crawled across all assets</div>
+                </div>
+                <div id="panel-sitewide-container" style="width:100%">
+                    <div style="text-align:center;padding:40px;color:var(--text3)">
+                        <h3>No page crawl data found yet</h3>
+                        <p style="font-size:12px;margin-top:6px">Initiate a link crawl on the console to compile site-wide analytics.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ LINK GRAPH PANEL ══ -->
+            <div class="panel" id="panel-graph">
+                <div>
+                    <div class="ph">Internal Link Graph Visualizer</div>
+                    <div class="ps">Interactive nodes mapping linking layout configurations</div>
+                </div>
+                <div id="panel-graph-container" style="width:100%">
+                    <div style="text-align:center;padding:40px;color:var(--text3)">
+                        <h3>Orphan and Link Graph map empty</h3>
+                        <p style="font-size:12px;margin-top:6px">Run a complete site-crawl to unlock link linkage visualizer.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ AI SEO STUDIO PANEL (PHASES 7-11) ══ -->
+            <div class="panel" id="panel-ai">
+                <div>
+                    <div class="ph">AuditForge AI SEO Studio</div>
+                    <div class="ps">Generative Search Optimization & Integration Workspace</div>
+                </div>
+
+                <!-- AI Workspace subtabs -->
+                <div class="mod-tabs" style="margin-top:10px">
+                    <button class="mtab active" id="btn-tab-consultant" onclick="toggleAISubTab('consultant')">AI Consultant Chat</button>
+                    <button class="mtab" id="btn-tab-gsc" onclick="toggleAISubTab('gsc')">Google Search Console</button>
+                    <button class="mtab" id="btn-tab-geo" onclick="toggleAISubTab('geo')">AI Search / GEO Engine</button>
+                    <button class="mtab" id="btn-tab-competitor" onclick="toggleAISubTab('competitor')">Competitor Gap Analysis</button>
+                    <button class="mtab" id="btn-tab-brief" onclick="toggleAISubTab('brief')">AI Content Briefs</button>
+                    <button class="mtab" onclick="triggerPDFExport()">🖨 White-Label PDF</button>
+                </div>
+
+                <!-- SUB PANELS -->
+                <div id="ai-sub-consultant" class="ai-pane active" style="width:100%;margin-top:14px">
+                    <div class="card pb-6" style="display:flex;flex-direction:column;height:420px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                            <div class="sec-title">Conversational AI SEO Consultant</div>
+                            <span style="font-size:10px;background:#10B981;color:#fff;border-radius:4px;padding:2px 6px;font-family:var(--mono);font-weight:700">✓ 100% FREE & UNLIMITED</span>
+                        </div>
+                        <div class="card-sub" style="margin-bottom:12px">Real-time answers, priority roadmaps and GEO plans powered by crawler context. Paid AI capabilities are fully covered by the enterprise workspace.</div>
+                        
+                        <div id="chatLog" style="flex:1;background:rgba(0,0,0,0.1);border:1px solid var(--border);border-radius:6px;padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+                            <div style="align-self:flex-start;background:rgba(16,185,129,0.03);border:1px solid #10B981;border-radius:6px 6px 6px 0;padding:8px 12px;max-width:85%;font-size:11px;font-family:var(--mono)">
+                                <span style="color:#10B981;font-weight:700">AI Consultant:</span><br>
+                                Welcome to Enterprise AI Studio! I have fully loaded your crawl anomalies and keywords parameters. Ask me any SEO consulting strategy, competitor gap remedy, or content outlines!
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:8px;margin-top:10px">
+                            <input type="text" id="chatInput" placeholder="Ex: 'List 3 priorities for home page content' or 'How to fix H1 gaps?'..." style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--text1)" onkeydown="if(event.key==='Enter') sendConsultantChat()" />
+                            <button class="exec-btn" onclick="sendConsultantChat()">Send Input</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ai-sub-gsc" class="ai-pane" style="width:100%;margin-top:14px;display:none">
+                    <div id="panel-gsc"></div>
+                </div>
+
+                <div id="ai-sub-geo" class="ai-pane" style="width:100%;margin-top:14px;display:none">
+                    <div id="panel-geo-container"></div>
+                </div>
+
+                <div id="ai-sub-competitor" class="ai-pane" style="width:100%;margin-top:14px;display:none">
+                    <div class="card pb-6">
+                        <div class="sec-title">Competitor Optimization Gaps Map</div>
+                        <div class="card-sub" style="margin-bottom:12px">Compare real-time schemas, topic layers, and keywords coverage with competitor landing pages</div>
+
+                        <div style="display:flex;gap:8px;margin-bottom:14px">
+                            <input type="text" id="compUrlInput" placeholder="Ex: https://competitordomain.com/seo-check" style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--text1)" />
+                            <button class="exec-btn" onclick="triggerCompetitorAnalysis()">Analyze Competitor</button>
+                        </div>
+
+                        <table style="width:100%;font-size:11px;font-family:monospace;border-collapse:collapse">
+                          <thead>
+                            <tr style="border-bottom:1px solid var(--border);text-align:left">
+                              <th style="padding:8px">Metrics Dimension</th>
+                              <th style="padding:8px">My Page Core</th>
+                              <th style="padding:8px">Competitor Core</th>
+                              <th style="padding:8px">Strategic Action / Verdict</th>
+                            </tr>
+                          </thead>
+                          <tbody id="compTableBody">
+                            <tr>
+                              <td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Input competitor URL above to run instant semantic gaps analysis</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div id="competitorGapsSummary"></div>
+                    </div>
+                </div>
+
+                <div id="ai-sub-brief" class="ai-pane" style="width:100%;margin-top:14px;display:none">
+                    <div class="card pb-6">
+                        <div class="sec-title">AI Content Brief Plan Generator</div>
+                        <div class="card-sub" style="margin-bottom:12px">Autogenerate primary & secondary semantic groupings, structure layouts and FAQs targeting exact focus queries</div>
+
+                        <div style="display:flex;gap:8px;margin-bottom:14px">
+                            <input type="text" id="briefQueryInput" placeholder="Ex: Enterprise SEO metrics, modern web auditing..." style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--text1)" />
+                            <button class="exec-btn" onclick="triggerBriefGeneration()">Generate Outline Brief</button>
+                        </div>
+
+                        <div id="briefOutputContainer">
+                            <div style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;padding:24px;border:1px dashed var(--border);border-radius:6px">
+                                Brief Blueprint output will render here...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Script for local subtab switching -->
+                <script>
+                    function toggleAISubTab(tabName) {
+                        document.querySelectorAll('.ai-pane').forEach(el => {
+                            el.style.display = 'none';
+                            el.classList.remove('active');
+                        });
+                        document.querySelectorAll('#panel-ai .mtab').forEach(el => {
+                            el.classList.remove('active');
+                        });
+                        
+                        const curPane = document.getElementById('ai-sub-' + tabName);
+                        if (curPane) {
+                            curPane.style.display = 'block';
+                            curPane.classList.add('active');
+                        }
+                        
+                        const curBtn = document.getElementById('btn-tab-' + tabName);
+                        if (curBtn) {
+                            curBtn.classList.add('active');
+                        }
+
+                        // Trigger dynamic rendering based on active subtab
+                        if (tabName === 'gsc') {
+                            if (typeof renderGSCContainer === 'function') renderGSCContainer();
+                        } else if (tabName === 'geo') {
+                            if (typeof renderGEOPanel === 'function') renderGEOPanel();
+                        }
+                    }
+                </script>
+            </div>
+
         </div><!-- /main -->
     </div><!-- /app -->
 
-   <!-- External JS Scripts loaded in proper sequential order -->
+    <!-- External JS -->
     <script src="js/core.js"></script>
     <script src="js/parser.js"></script>
     <script src="js/crawler.js"></script>
@@ -707,6 +892,7 @@
     <script src="js/history.js"></script>
     <script src="js/exports.js"></script>
     <script src="js/overrides.js"></script>
+    <script src="js/enterprise-expansion.js"></script>
     <script src="js/app-init.js"></script>
 </body>
 </html>
