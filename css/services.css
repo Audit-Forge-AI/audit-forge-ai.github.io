@@ -1325,3 +1325,46 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
   .rec-controls { flex-direction: column; }
   .rec-search { min-width: 0; width: 100%; }
 }
+/* Footer */
+.site-footer{
+    margin-top:60px;
+    padding:24px 20px;
+    border-top:1px solid var(--border);
+    background:var(--bg2);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    text-align:center;
+}
+
+.footer-links{
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+}
+
+.footer-links a,
+.footer-copy a{
+    color:var(--green);
+    text-decoration:none;
+    font-weight:600;
+    transition:.2s ease;
+}
+
+.footer-links a:hover,
+.footer-copy a:hover{
+    opacity:.8;
+}
+
+.footer-copy{
+    color:var(--text2);
+    font-size:13px;
+    line-height:1.6;
+}
+
+@media (max-width:768px){
+    .footer-links{
+        gap:16px;
+    }
+}
